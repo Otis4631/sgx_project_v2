@@ -32,3 +32,8 @@
 *.app
 core
 application
+
+# datasets
+*.csv
+*.dataset
+*.data
