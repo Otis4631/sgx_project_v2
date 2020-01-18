@@ -1,0 +1,6 @@
+// #ifndef TYPE_ACTIVATION
+// #define TYPE_ACTIVATION
+// typedef enum{
+//     LOGISTIC, RELU, RELIE, LINEAR, RAMP, TANH, PLSE, LEAKY, ELU, LOGGY, STAIR, HARDTAN, LHTAN
+// }ACTIVATION;
+// #endif
