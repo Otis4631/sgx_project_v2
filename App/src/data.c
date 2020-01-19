@@ -102,7 +102,7 @@ matrix load_image_paths_gray(char **paths, int n, int w, int h)
     }
     return X;
 }
-data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt) {
+data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt, int normalize) {
     long* indices = calloc(n, sizeof(long));
     matrix x, y;
     data d = {0};
@@ -126,7 +126,7 @@ data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt) {
         size_t cnt_line = 0;
         char* line = NULL;
 
-        while(cnt_line++ < index) {
+        while(cnt_line++ <= index) {
             if(line)
                 free(line);
             line = fgetl(csv_file);
@@ -148,7 +148,8 @@ data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt) {
         memcpy(foo_y, tmp, sizeof(float));
 
         x.vals[i] = foo_x;
-        normalize_array(x.vals[i], fig_size);
+        if(normalize)
+            normalize_array(x.vals[i], fig_size);
         y.vals[i] = foo_y;
         free(line);
         free(tmp);
@@ -612,7 +613,7 @@ void *load_thread(void *ptr)
     if(a.aspect == 0) a.aspect = 1;
 
     if(a.type = CSV_DATA) {
-        *a.d = load_data_csv(a.csv_path, a.n, a.m, a.h*a.w*a.c, a.encrypt);
+        *a.d = load_data_csv(a.csv_path, a.n, a.m, a.h*a.w*a.c, a.encrypt, a.normalize);
     } else if (a.type == OLD_CLASSIFICATION_DATA){
         *a.d = load_data_old(a.paths, a.n, a.m, a.labels, a.classes, a.w, a.h);
     } else if (a.type == REGRESSION_DATA){

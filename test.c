@@ -6,13 +6,15 @@
 
 int main() 
 {
-    float a[] = {1.234,2.355,-5.555};
-    float f = 19.25;
-    char *c = (char*)malloc(12);
-    void *vp = calloc(3, sizeof(float));
-    c = a;
-    vp =a;
-    for(int i=0;i<4;i++)
-        printf("%d\n",c[i]);
- 
+    FILE *fp = fopen("backup/test_weights", "w");
+    int arr[] = {1,2,3,0};
+    float weight1[] = {1,2,3,4,5,6,7,8};
+    float weight2[] = {1.1,2.2,3.3,4.4};
+    float bias[] = {0.5, 0.6};
+    fwrite(arr, sizeof(int), 4, fp);
+    fwrite(bias, sizeof(float), 2, fp);
+    fwrite(weight1, sizeof(float), 8, fp);
+    fwrite(bias, sizeof(float), 1, fp);
+    fwrite(weight2, sizeof(float), 4, fp);
+    fclose(fp);
 }

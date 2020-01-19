@@ -65,7 +65,7 @@ int main(){
     initialize_enclave();
     printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
    // predict("data/conv_test.cfg", "cfg/mynet.cfg", NULL);
-   train("data/train.cfg", "cfg/mynet.cfg", NULL);
+   train("data/bp_test.cfg", "cfg/bp_test.cfg", "backup/test_weights");
     destory_enclave();
 
 }

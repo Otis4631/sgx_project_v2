@@ -21,7 +21,7 @@ typedef struct network{
     float momentum;     // parse_net_options()中赋值
     float decay;        // parse_net_options()中赋值
     layer *layers;      // 存储网络所有的层，在make_network()中动态分配内存
-    float *output;
+    float *output;      // 存储前向传播的结果，指向最后一层（非损失函数层）output指针的地址
     learning_rate_policy policy;
 
     float learning_rate; // parse_net_options()中赋值

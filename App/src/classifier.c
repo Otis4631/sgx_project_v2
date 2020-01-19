@@ -98,6 +98,7 @@ void train_csv(network* net, list* data_options) {
     char *backup_directory = option_find_str(data_options, "backup", "backup");
     char *label_filename = option_find_str(data_options, "labels", "data/labels.list");
     char *train_filename = option_find_str(data_options, "train", "data/train.list");
+    int normalize = option_find_int_quiet(data_options, "normalize", 1);
     int classes = option_find_int(data_options, "classes", 2);
     long N = option_find_long(data_options, "size", 0);
     int encrypt = option_find_int(data_options, "encrypt", 0);
@@ -107,8 +108,9 @@ void train_csv(network* net, list* data_options) {
     args.h = net->h;
     args.n = net->batch;
     args.m = N;
+    args.normalize = normalize;
     args.encrypt = encrypt;
-    args.threads = 2;
+    args.threads = 1;
     args.type = CSV_DATA;
     args.c = net->c;
     data train;
@@ -137,6 +139,12 @@ void train_csv(network* net, list* data_options) {
             save_weights(*net, buff);
         }
     }
+    pthread_join(load_thread, 0);
+    net->input = buffer.X.vals[0];
+
+    forward_network(net);
+    float *out = net->output;
+    printf("OUT:%f\n", *out);
     char buff[256];
     sprintf(buff, "%s/%s.weights", backup_directory, base);
     save_weights(*net, buff);

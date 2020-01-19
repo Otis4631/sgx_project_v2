@@ -328,7 +328,6 @@ float train_network(network* net, data d)
     int n = d.X.rows / batch; // = 1
     //上边没用
 
-
     int i;
     float sum = 0;
     for(i = 0; i < n; ++i){
