@@ -1,5 +1,7 @@
 #include "convolutional_layer.h"
-#include "ecall_layer_forward.h"
+#include "e_forward.h"
+#include "e_backward.h"
+
 #include "utils.h"
 #include "batchnorm_layer.h"
 #include "im2col.h"

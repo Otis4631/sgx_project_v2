@@ -250,12 +250,14 @@ cost_layer parse_cost(list *options, size_params params)
     char *type_s = option_find_str(options, "type", "sse");
     COST_TYPE type = get_cost_type(type_s);
     float scale = option_find_float_quiet(options, "scale",1);
-    cost_layer layer = make_cost_layer(params.batch, params.inputs, type, scale);
+    int sgx = option_find_int_quiet(options, "sgx", 1);
+
+    cost_layer layer = make_cost_layer(params.batch, params.inputs, type, scale, sgx);
+
     layer.ratio =  option_find_float_quiet(options, "ratio",0);
     layer.thresh =  option_find_float_quiet(options, "thresh",0);
     return layer;
 }
-
 
 maxpool_layer parse_maxpool(list *options, size_params params)
 {

@@ -6,7 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include "e_forward.h"
+#include "e_backward.h"
 /*
 ** 支持四种cost functions
 ** L1    即误差的绝对值之和
@@ -41,7 +42,7 @@ char *get_cost_string(COST_TYPE a)
     return "sse";
 }
 
-cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, float scale)
+cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, float scale, int sgx)
 {
     fprintf(stderr, "cost                                           %4d\n",  inputs);
     cost_layer l = {0};
@@ -55,9 +56,13 @@ cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, float sca
     l.delta = calloc(inputs*batch, sizeof(float));
     l.output = calloc(inputs*batch, sizeof(float));
     l.cost = calloc(1, sizeof(float));
-
+    l.sgx = sgx;
     l.forward = forward_cost_layer;
     l.backward = backward_cost_layer;
+    if(l.sgx){
+        l.backward = e_backward_cost_layer;
+        l.forward = e_forward_cost_layer;
+    }
     #ifdef GPU
     l.forward_gpu = forward_cost_layer_gpu;
     l.backward_gpu = backward_cost_layer_gpu;

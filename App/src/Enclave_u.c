@@ -116,6 +116,13 @@ typedef struct ms_ecall_forward_cost_layer_t {
 	float* ms_cost;
 } ms_ecall_forward_cost_layer_t;
 
+typedef struct ms_ecall_backward_cost_layer_t {
+	size_t ms_input_size;
+	int ms_scale;
+	float* ms_delta;
+	float* ms_n_delta;
+} ms_ecall_backward_cost_layer_t;
+
 typedef struct ms_ecall_backward_connected_layer_t {
 	int ms_batch;
 	int ms_outputs;
@@ -124,12 +131,14 @@ typedef struct ms_ecall_backward_connected_layer_t {
 	size_t ms_a_len;
 	size_t ms_b_len;
 	size_t ms_c_len;
+	size_t ms_nd_len;
 	float* ms_output;
 	float* ms_input;
 	float* ms_delta;
 	float* ms_n_delta;
-	float* ms_bias;
 	float* ms_weights;
+	float* ms_bias_updates;
+	float* ms_weight_updates;
 } ms_ecall_backward_connected_layer_t;
 
 typedef struct ms_ocall_print_string_t {
@@ -315,7 +324,19 @@ sgx_status_t ecall_forward_cost_layer(sgx_enclave_id_t eid, COST_TYPE cost_type,
 	return status;
 }
 
-sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, float* output, float* input, float* delta, float* n_delta, float* bias, float* weights)
+sgx_status_t ecall_backward_cost_layer(sgx_enclave_id_t eid, size_t input_size, int scale, float* delta, float* n_delta)
+{
+	sgx_status_t status;
+	ms_ecall_backward_cost_layer_t ms;
+	ms.ms_input_size = input_size;
+	ms.ms_scale = scale;
+	ms.ms_delta = delta;
+	ms.ms_n_delta = n_delta;
+	status = sgx_ecall(eid, 9, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len, float* output, float* input, float* delta, float* n_delta, float* weights, float* bias_updates, float* weight_updates)
 {
 	sgx_status_t status;
 	ms_ecall_backward_connected_layer_t ms;
@@ -326,13 +347,15 @@ sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int batch, int
 	ms.ms_a_len = a_len;
 	ms.ms_b_len = b_len;
 	ms.ms_c_len = c_len;
+	ms.ms_nd_len = nd_len;
 	ms.ms_output = output;
 	ms.ms_input = input;
 	ms.ms_delta = delta;
 	ms.ms_n_delta = n_delta;
-	ms.ms_bias = bias;
 	ms.ms_weights = weights;
-	status = sgx_ecall(eid, 9, &ocall_table_Enclave, &ms);
+	ms.ms_bias_updates = bias_updates;
+	ms.ms_weight_updates = weight_updates;
+	status = sgx_ecall(eid, 10, &ocall_table_Enclave, &ms);
 	return status;
 }
 

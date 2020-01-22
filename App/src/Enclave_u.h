@@ -31,7 +31,8 @@ sgx_status_t ecall_forward_maxpool_layer(sgx_enclave_id_t eid, int pad, int h, i
 sgx_status_t ecall_forward_convolutional_layer(sgx_enclave_id_t eid, int batch, int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, float* weights, int weight_len, float* input, int in_len, float* output, int out_len, float* biases, int bias_len, ACTIVATION activation);
 sgx_status_t ecall_rc4_crypt(sgx_enclave_id_t eid, unsigned char* key, unsigned long int key_len, unsigned char* Data, unsigned long int Len);
 sgx_status_t ecall_forward_cost_layer(sgx_enclave_id_t eid, COST_TYPE cost_type, int batch, int in_len, float* input, size_t input_size, float* truth, float* delta, float* output, float* cost);
-sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, float* output, float* input, float* delta, float* n_delta, float* bias, float* weights);
+sgx_status_t ecall_backward_cost_layer(sgx_enclave_id_t eid, size_t input_size, int scale, float* delta, float* n_delta);
+sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len, float* output, float* input, float* delta, float* n_delta, float* weights, float* bias_updates, float* weight_updates);
 
 #ifdef __cplusplus
 }

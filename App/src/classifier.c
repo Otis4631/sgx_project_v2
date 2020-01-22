@@ -144,6 +144,7 @@ void train_csv(network* net, list* data_options) {
 
     forward_network(net);
     float *out = net->output;
+    crypt_aux(pass, pass_len, (unsigned char *)out, sizeof(float), 1);
     printf("OUT:%f\n", *out);
     char buff[256];
     sprintf(buff, "%s/%s.weights", backup_directory, base);

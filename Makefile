@@ -2,7 +2,7 @@
 OPENMP ?= 0
 
 # ?= 如果没有被赋值过就赋予等号后面的值
-SGX_SDK ?= /data/lz/sgxsdk
+SGX_SDK ?= /root/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 1
@@ -104,9 +104,9 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags)
-App_Link_Flags := -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) -lpthread -lcrypto
+App_Link_Flags := -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) -lpthread 
 ifeq ($(OPENMP), 1)
-App_Link_Flags += -lgomp -lssl -lcrypto
+App_Link_Flags += -lgomp 
 endif
 
 

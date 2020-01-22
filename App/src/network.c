@@ -173,7 +173,7 @@ network make_network(int n)
     net.cost = calloc(1, sizeof(float));
     return net;
 }
-
+            
 /** 前向计算网络net每一层的输出.
  * @param net 构建好的整个网络模型
  * @details 遍历net的每一层网络，从第0层到最后一层，逐层计算每层的输出

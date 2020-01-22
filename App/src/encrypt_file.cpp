@@ -15,15 +15,23 @@ void encrypt_csv(char* filename_plaintext, char* filename_ciphertext, unsigned c
         if(!fp_plain || !fp_cipher) {
         printf("error fp\n");
     }
+    int label_encrypt = 1;
     char* line;
     char* base_out = nullptr;
-    while((line = fgetl(fp_plain))) {
+    while((line = fgetl(fp_plain))) {       // not a number
         if (48 > line[0] || line[0] > 57)
             continue;
         int fields = count_fields(line);
         float* input = parse_fields(line, fields, NULL);
         int i;
-        rc4_crypt(passwd, passwd_len, (unsigned char *)input, 4 * fields);
+        if(label_encrypt) {
+            rc4_crypt(passwd, passwd_len, (unsigned char *)input, 4 * 1); // label 单独加密
+            rc4_crypt(passwd, passwd_len, (unsigned char *)(input + 1), 4 * (fields - 1));  // 加密除label外的数据部分
+
+        }
+        else {
+            rc4_crypt(passwd, passwd_len, (unsigned char *)(input), 4 * (fields)); 
+        }
         int base_out_len = ceil((fields *  4) / 3.0) * 4;
         if(!base_out)
             base_out = new char[base_out_len];

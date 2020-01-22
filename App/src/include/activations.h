@@ -1,6 +1,5 @@
 #ifndef ACTIVATIONS_H
 #define ACTIVATIONS_H
-#include "cuda.h"
 #include "math.h"
 
 /*
@@ -67,6 +66,9 @@ static inline float hardtan_gradient(float x)
 static inline float linear_gradient(float x){return 1;}
 
 // 返回logistic (sigmoid) function关于输入x的导数值
+// sigmoid的导数为：( 1-（1/(1 - exp-z)）)*(1/(1 - exp-z))
+// 也就是 (1 - sigmoid(z)) * sigmoid(z)
+// 正常是对于z的导数，此处x=sigmoid(z)
 static inline float logistic_gradient(float x){return (1-x)*x;}
 
 static inline float loggy_gradient(float x)

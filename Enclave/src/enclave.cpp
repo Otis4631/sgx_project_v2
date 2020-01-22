@@ -18,8 +18,8 @@ int printf(const char* fmt, ...)
     return (int)strnlen(buf, BUFSIZ - 1) + 1;
 }
 
-unsigned char pass[] = "lizheng";
-int pass_len = sizeof(pass);
+// unsigned char pass[] = "lizheng";
+// int pass_len = sizeof(pass);
 
 void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
         float *A, int lda, 
@@ -203,17 +203,15 @@ float sum_array(float *a, int n)
     return sum;
 }
 
-
 void ecall_forward_cost_layer(COST_TYPE cost_type, int batch, int in_len,
                               float* input, size_t input_size,
                               float* truth, 
                               float* delta,
                               float* output,
-                              float* cost)
+                              float* cost){
+   crypt_aux((uint8_t *)pass, pass_len, (uint8_t*)input, sizeof(float) * input_size, batch);
+    crypt_aux((uint8_t *)pass, pass_len, (uint8_t*)truth, sizeof(float) * 1, batch);
 
-
-{
-   
     if(cost_type == SMOOTH){
         smooth_l1_cpu(input_size, input, truth, delta, output);
     }else if(cost_type == L1){

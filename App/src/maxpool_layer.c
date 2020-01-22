@@ -1,5 +1,7 @@
 #include "maxpool_layer.h"
-#include "ecall_layer_forward.h"
+#include "e_forward.h"
+#include "e_backward.h"
+
 #include "cuda.h"
 #include <stdio.h>
 

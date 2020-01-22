@@ -76,7 +76,8 @@
         "cost_layer.h": "c",
         "network.h": "c",
         "cuda.h": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "types.h": "c"
     },
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
     "git.ignoreLimitWarning": true,

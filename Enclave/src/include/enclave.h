@@ -14,5 +14,6 @@ extern "C"{
     #include "blas.h"
     #include "float.h"
 }
-
+const uint8_t pass[] = "lizheng";
+const size_t pass_len = 8;
 int printf(const char* fmt, ...);

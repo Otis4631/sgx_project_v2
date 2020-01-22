@@ -1,13 +1,16 @@
 enclave{
     trusted{
-        public void ecall_backward_connected_layer(int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len,
+        public void ecall_backward_cost_layer(size_t input_size, int scale, 
+                                    [in, count=input_size]      float* delta,
+                                    [in, out, count=input_size] float* n_delta);
+        public void ecall_backward_connected_layer(int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len,
                                     [in, count=a_len]           float* output, 
                                     [in, count=b_len]           float* input,
                                     [in, out, count=a_len]      float* delta,
-                                    [in, out, count=b_len]      float* n_delta,
-
-                                    [in, out, count=outputs]    float* bias,
-                                    [in, out, count=c_len]      float* weights);
+                                    [in, out, count=nd_len]     float* n_delta,
+                                    [in, out, count=c_len]      float* weights,
+                                    [in, out, count=outputs]    float* bias_updates,
+                                    [in, out, count=c_len]      float* weight_updates);
 
     };
     untrusted{};

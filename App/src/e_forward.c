@@ -1,4 +1,4 @@
-#include "ecall_layer_forward.h"
+#include "e_forward.h"
 #include "Enclave_u.h"
 #include "layer.h"
 #include "network.h"
@@ -96,7 +96,12 @@ int e_forward_maxpool_layer(layer l, network net){
 }
 
 
-void e_forward_cost_layer(cost_layer l, network net)
+int e_forward_cost_layer(layer l, network net)
 {
-    ecall_forward_cost_layer(EID, l.cost_type, l.batch, l.inputs, net.input, l.batch*l.inputs, net.truth,l.delta, l.output, l.cost); 
+    sgx_status_t ret = ecall_forward_cost_layer(EID, l.cost_type, l.batch, l.inputs, net.input, l.batch*l.inputs, net.truth,l.delta, l.output, l.cost); 
+    if(ret != SGX_SUCCESS)
+        {
+            printf("someting goes wrong with forward cost layer!\n");
+            return ;
+        }
 }

@@ -142,6 +142,13 @@ typedef struct ms_ecall_forward_cost_layer_t {
 	float* ms_cost;
 } ms_ecall_forward_cost_layer_t;
 
+typedef struct ms_ecall_backward_cost_layer_t {
+	size_t ms_input_size;
+	int ms_scale;
+	float* ms_delta;
+	float* ms_n_delta;
+} ms_ecall_backward_cost_layer_t;
+
 typedef struct ms_ecall_backward_connected_layer_t {
 	int ms_batch;
 	int ms_outputs;
@@ -150,12 +157,14 @@ typedef struct ms_ecall_backward_connected_layer_t {
 	size_t ms_a_len;
 	size_t ms_b_len;
 	size_t ms_c_len;
+	size_t ms_nd_len;
 	float* ms_output;
 	float* ms_input;
 	float* ms_delta;
 	float* ms_n_delta;
-	float* ms_bias;
 	float* ms_weights;
+	float* ms_bias_updates;
+	float* ms_weight_updates;
 } ms_ecall_backward_connected_layer_t;
 
 typedef struct ms_ocall_print_string_t {
@@ -1111,6 +1120,92 @@ err:
 	return status;
 }
 
+static sgx_status_t SGX_CDECL sgx_ecall_backward_cost_layer(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_backward_cost_layer_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_ecall_backward_cost_layer_t* ms = SGX_CAST(ms_ecall_backward_cost_layer_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	float* _tmp_delta = ms->ms_delta;
+	size_t _tmp_input_size = ms->ms_input_size;
+	size_t _len_delta = _tmp_input_size * sizeof(float);
+	float* _in_delta = NULL;
+	float* _tmp_n_delta = ms->ms_n_delta;
+	size_t _len_n_delta = _tmp_input_size * sizeof(float);
+	float* _in_n_delta = NULL;
+
+	if (sizeof(*_tmp_delta) != 0 &&
+		(size_t)_tmp_input_size > (SIZE_MAX / sizeof(*_tmp_delta))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_n_delta) != 0 &&
+		(size_t)_tmp_input_size > (SIZE_MAX / sizeof(*_tmp_n_delta))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	CHECK_UNIQUE_POINTER(_tmp_delta, _len_delta);
+	CHECK_UNIQUE_POINTER(_tmp_n_delta, _len_n_delta);
+
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+
+	if (_tmp_delta != NULL && _len_delta != 0) {
+		if ( _len_delta % sizeof(*_tmp_delta) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_delta = (float*)malloc(_len_delta);
+		if (_in_delta == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_delta, _len_delta, _tmp_delta, _len_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_n_delta != NULL && _len_n_delta != 0) {
+		if ( _len_n_delta % sizeof(*_tmp_n_delta) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_n_delta = (float*)malloc(_len_n_delta);
+		if (_in_n_delta == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_n_delta, _len_n_delta, _tmp_n_delta, _len_n_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_backward_cost_layer(_tmp_input_size, ms->ms_scale, _in_delta, _in_n_delta);
+	if (_in_n_delta) {
+		if (memcpy_s(_tmp_n_delta, _len_n_delta, _in_n_delta, _len_n_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+
+err:
+	if (_in_delta) free(_in_delta);
+	if (_in_n_delta) free(_in_n_delta);
+	return status;
+}
+
 static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 {
 	CHECK_REF_POINTER(pms, sizeof(ms_ecall_backward_connected_layer_t));
@@ -1132,16 +1227,20 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 	size_t _len_delta = _tmp_a_len * sizeof(float);
 	float* _in_delta = NULL;
 	float* _tmp_n_delta = ms->ms_n_delta;
-	size_t _len_n_delta = _tmp_b_len * sizeof(float);
+	size_t _tmp_nd_len = ms->ms_nd_len;
+	size_t _len_n_delta = _tmp_nd_len * sizeof(float);
 	float* _in_n_delta = NULL;
-	float* _tmp_bias = ms->ms_bias;
-	int _tmp_outputs = ms->ms_outputs;
-	size_t _len_bias = _tmp_outputs * sizeof(float);
-	float* _in_bias = NULL;
 	float* _tmp_weights = ms->ms_weights;
 	size_t _tmp_c_len = ms->ms_c_len;
 	size_t _len_weights = _tmp_c_len * sizeof(float);
 	float* _in_weights = NULL;
+	float* _tmp_bias_updates = ms->ms_bias_updates;
+	int _tmp_outputs = ms->ms_outputs;
+	size_t _len_bias_updates = _tmp_outputs * sizeof(float);
+	float* _in_bias_updates = NULL;
+	float* _tmp_weight_updates = ms->ms_weight_updates;
+	size_t _len_weight_updates = _tmp_c_len * sizeof(float);
+	float* _in_weight_updates = NULL;
 
 	if (sizeof(*_tmp_output) != 0 &&
 		(size_t)_tmp_a_len > (SIZE_MAX / sizeof(*_tmp_output))) {
@@ -1159,12 +1258,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 	}
 
 	if (sizeof(*_tmp_n_delta) != 0 &&
-		(size_t)_tmp_b_len > (SIZE_MAX / sizeof(*_tmp_n_delta))) {
-		return SGX_ERROR_INVALID_PARAMETER;
-	}
-
-	if (sizeof(*_tmp_bias) != 0 &&
-		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_bias))) {
+		(size_t)_tmp_nd_len > (SIZE_MAX / sizeof(*_tmp_n_delta))) {
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
@@ -1173,12 +1267,23 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
+	if (sizeof(*_tmp_bias_updates) != 0 &&
+		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_bias_updates))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_weight_updates) != 0 &&
+		(size_t)_tmp_c_len > (SIZE_MAX / sizeof(*_tmp_weight_updates))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
 	CHECK_UNIQUE_POINTER(_tmp_output, _len_output);
 	CHECK_UNIQUE_POINTER(_tmp_input, _len_input);
 	CHECK_UNIQUE_POINTER(_tmp_delta, _len_delta);
 	CHECK_UNIQUE_POINTER(_tmp_n_delta, _len_n_delta);
-	CHECK_UNIQUE_POINTER(_tmp_bias, _len_bias);
 	CHECK_UNIQUE_POINTER(_tmp_weights, _len_weights);
+	CHECK_UNIQUE_POINTER(_tmp_bias_updates, _len_bias_updates);
+	CHECK_UNIQUE_POINTER(_tmp_weight_updates, _len_weight_updates);
 
 	//
 	// fence after pointer checks
@@ -1257,24 +1362,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 		}
 
 	}
-	if (_tmp_bias != NULL && _len_bias != 0) {
-		if ( _len_bias % sizeof(*_tmp_bias) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_bias = (float*)malloc(_len_bias);
-		if (_in_bias == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_bias, _len_bias, _tmp_bias, _len_bias)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
 	if (_tmp_weights != NULL && _len_weights != 0) {
 		if ( _len_weights % sizeof(*_tmp_weights) != 0)
 		{
@@ -1293,8 +1380,44 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 		}
 
 	}
+	if (_tmp_bias_updates != NULL && _len_bias_updates != 0) {
+		if ( _len_bias_updates % sizeof(*_tmp_bias_updates) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_bias_updates = (float*)malloc(_len_bias_updates);
+		if (_in_bias_updates == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ecall_backward_connected_layer(ms->ms_batch, _tmp_outputs, ms->ms_inputs, ms->ms_a, _tmp_a_len, _tmp_b_len, _tmp_c_len, _in_output, _in_input, _in_delta, _in_n_delta, _in_bias, _in_weights);
+		if (memcpy_s(_in_bias_updates, _len_bias_updates, _tmp_bias_updates, _len_bias_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_weight_updates != NULL && _len_weight_updates != 0) {
+		if ( _len_weight_updates % sizeof(*_tmp_weight_updates) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_weight_updates = (float*)malloc(_len_weight_updates);
+		if (_in_weight_updates == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_weight_updates, _len_weight_updates, _tmp_weight_updates, _len_weight_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_backward_connected_layer(ms->ms_batch, _tmp_outputs, ms->ms_inputs, ms->ms_a, _tmp_a_len, _tmp_b_len, _tmp_c_len, _tmp_nd_len, _in_output, _in_input, _in_delta, _in_n_delta, _in_weights, _in_bias_updates, _in_weight_updates);
 	if (_in_delta) {
 		if (memcpy_s(_tmp_delta, _len_delta, _in_delta, _len_delta)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -1307,14 +1430,20 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 			goto err;
 		}
 	}
-	if (_in_bias) {
-		if (memcpy_s(_tmp_bias, _len_bias, _in_bias, _len_bias)) {
+	if (_in_weights) {
+		if (memcpy_s(_tmp_weights, _len_weights, _in_weights, _len_weights)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
 	}
-	if (_in_weights) {
-		if (memcpy_s(_tmp_weights, _len_weights, _in_weights, _len_weights)) {
+	if (_in_bias_updates) {
+		if (memcpy_s(_tmp_bias_updates, _len_bias_updates, _in_bias_updates, _len_bias_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_weight_updates) {
+		if (memcpy_s(_tmp_weight_updates, _len_weight_updates, _in_weight_updates, _len_weight_updates)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
@@ -1325,16 +1454,17 @@ err:
 	if (_in_input) free(_in_input);
 	if (_in_delta) free(_in_delta);
 	if (_in_n_delta) free(_in_n_delta);
-	if (_in_bias) free(_in_bias);
 	if (_in_weights) free(_in_weights);
+	if (_in_bias_updates) free(_in_bias_updates);
+	if (_in_weight_updates) free(_in_weight_updates);
 	return status;
 }
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[10];
+	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[11];
 } g_ecall_table = {
-	10,
+	11,
 	{
 		{(void*)(uintptr_t)sgx_hello, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_gemm, 0, 0},
@@ -1345,17 +1475,18 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_forward_convolutional_layer, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_rc4_crypt, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_forward_cost_layer, 0, 0},
+		{(void*)(uintptr_t)sgx_ecall_backward_cost_layer, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_backward_connected_layer, 0, 0},
 	}
 };
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[1][10];
+	uint8_t entry_table[1][11];
 } g_dyn_entry_table = {
 	1,
 	{
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 

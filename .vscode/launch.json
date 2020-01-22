@@ -49,11 +49,11 @@
         },
         {
             "name": "sgx-gdb",
-            "miDebuggerPath": "/data/lz/sgxsdk/bin/sgx-gdb",
+            "miDebuggerPath": "/root/sgxsdk/bin/sgx-gdb",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/application",
-            "args": [],
+            "args": ["t"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

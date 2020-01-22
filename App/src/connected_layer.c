@@ -4,7 +4,8 @@
 #include "cuda.h"
 #include "blas.h"
 #include "gemm.h"
-#include "ecall_layer_forward.h"
+#include "e_forward.h"
+#include "e_backward.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -54,6 +55,7 @@ connected_layer make_connected_layer(int batch, int inputs, int outputs, ACTIVAT
     else 
         l.forward = e_forward_connected_layer;
     l.backward = backward_connected_layer;
+    if(sgx) l.backward = e_backward_connected_layer;
     l.update = update_connected_layer;
 
     // 初始化权重：缩放因子*-1到1之间的均匀分布，缩放因子等于sqrt(2./inputs)，为什么取这个值呢？？暂时没有想清楚，
@@ -107,7 +109,7 @@ void update_connected_layer(connected_layer l, int batch, float learning_rate, f
         scal_cpu(l.outputs, momentum, l.scale_updates, 1);
     }
 
-    //axpy_cpu(l.inputs*l.outputs, -decay*batch, l.weights, 1, l.weight_updates, 1);
+   // axpy_cpu(l.inputs*l.outputs, -decay*batch, l.weights, 1, l.weight_updates, 1);
     axpy_cpu(l.inputs*l.outputs, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
     scal_cpu(l.inputs*l.outputs, momentum, l.weight_updates, 1);
 }
