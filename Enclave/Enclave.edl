@@ -2,7 +2,10 @@ enclave {
     include "types.h"
     from "backward.edl" import *;
     trusted{
+                             
         public void hello();
+        public void ecall_normalize_array([in, out, count =arr_len]float * array, size_t arr_len, size_t batch);
+
         public void ecall_gemm( int TA, int TB, int M, int N, int K, float ALPHA, 
                                 [in, count=a_size] float *A, int lda, 
                                 [in, count=b_size] float *B, int ldb,

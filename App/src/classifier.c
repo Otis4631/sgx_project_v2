@@ -132,13 +132,14 @@ void train_csv(network* net, list* data_options) {
         printf("Epoch: %d, Batch: %d, Loss: %g, Learning Rate: %g, Time used %.3fs, Image Processed: %d\n",
         epoch, get_current_batch(net), loss, get_current_rate(net), sec(clock()-time), *net->seen);
         free_data(train);
-        if(*net->seen/N > epoch){
+        if(*net->seen / N > epoch){
             epoch = *net->seen / N;
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights",backup_directory, base, epoch);
             save_weights(*net, buff);
         }
     }
+    
     pthread_join(load_thread, 0);
     net->input = buffer.X.vals[0];
 

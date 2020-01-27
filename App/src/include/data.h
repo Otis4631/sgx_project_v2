@@ -47,6 +47,7 @@ typedef struct load_args{
     char **paths;
     char *path;
     int encrypt;
+    // int *indices;       // csv 行数 
     int n;              // 当前batch数  
     int m;              // 图片总数
     int normalize;      // 读取完一张图片后是否需要normalize

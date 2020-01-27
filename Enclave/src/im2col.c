@@ -113,3 +113,86 @@ void im2col_cpu(float* data_im,
     }
 }
 
+
+
+void col2im_add_pixel(float *im, int height, int width, int channels,
+                        int row, int col, int channel, int pad, float val)
+{
+    row -= pad;
+    col -= pad;
+
+    // 边界检查：超过边界则不作为返回
+    if (row < 0 || col < 0 ||
+        row >= height || col >= width) return;
+    im[col + width*(row + height*channel)] += val;
+}
+
+
+void col2im_cpu(float* data_col,
+         int channels,  int height,  int width,
+         int ksize,  int stride, int pad, float* data_im) 
+{
+    int c,h,w;
+    // 当前层输出图的尺寸（对于上面的例子，height_col=2,width_col=2）
+    int height_col = (height + 2*pad - ksize) / stride + 1;
+    int width_col = (width + 2*pad - ksize) / stride + 1;
+
+    // 当前层每个卷积核在所有输入图像通道上的总元素个数（对于上面的例子，channels_col=3*3*3=27）
+    // 注意channels_col实际是data_col的行数
+    int channels_col = channels * ksize * ksize;
+
+    // 开始遍历：外循环遍历data_col的每一行（对于上面的例子，data_col共27行）
+    for (c = 0; c < channels_col; ++c) {
+
+        // 列偏移，卷积核是一个二维矩阵，并按行存储在一维数组中，利用求余运算获取对应在卷积核中的列数，比如对于
+        // 3*3的卷积核，当c=0时，显然在第一列，当c=5时，显然在第2列，当c=9时，在第二通道上的卷积核的第一列
+        int w_offset = c % ksize;
+
+        // 行偏移，卷积核是一个二维的矩阵，且是按行（卷积核所有行并成一行）存储在一维数组中的，
+        // 比如对于3*3的卷积核，处理3通道的图像，那么一个卷积核具有27个元素，每9个元素对应一个通道上的卷积核（互为一样），
+        // 每当c为3的倍数，就意味着卷积核换了一行，h_offset取值为0,1,2
+        int h_offset = (c / ksize) % ksize;
+
+        // 通道偏移，channels_col是多通道的卷积核并在一起的，比如对于3通道，3*3卷积核，每过9个元素就要换一通道数，
+        // 当c=0~8时，c_im=0;c=9~17时，c_im=1;c=18~26时，c_im=2
+        // c_im是data_im的通道数（即上一层输出当前层输入的通道数），对于上面的例子，c_im取值为0,1,2
+        int c_im = c / ksize / ksize;
+
+        // 中循环与内循环和起来刚好遍历data_col的每一行（对于上面的例子，data_col的列数为4,height_col*width_col=4）
+        for (h = 0; h < height_col; ++h) {
+            for (w = 0; w < width_col; ++w) {
+
+                // 获取在输出data_im中的行数im_row与列数im_col
+                // 由上面可知，对于3*3的卷积核，h_offset取值为0,1,2,当h_offset=0时，会提取出所有与卷积核第一行元素进行运算的像素，
+                // 依次类推；加上h*stride是对卷积核进行行移位操作，比如卷积核从图像(0,0)位置开始做卷积，那么最先开始涉及(0,0)~(3,3)
+                // 之间的像素值，若stride=2，那么卷积核进行行移位一次时，下一行的卷积操作是从元素(2,0)（2为图像行号，0为列号）开始
+                int im_row = h_offset + h * stride;
+                // 对于3*3的卷积核，w_offset取值也为0,1,2，当w_offset取1时，会提取出所有与卷积核中第2列元素进行运算的像素，
+                // 实际在做卷积操作时，卷积核对图像逐行扫描做卷积，加上w*stride就是为了做列移位，
+                // 比如前一次卷积其实像素元素为(0,0)，若stride=2,那么下次卷积元素起始像素位置为(0,2)（0为行号，2为列号）
+                int im_col = w_offset + w * stride;
+
+                // 计算在输出data_im中的索引号
+                // 对于上面的例子，im_row的取值范围为0~4,im_col从0~4，c从0~2（其中h_offset从0~2,w_offset从0~2, h从0~1,w从0~1）
+                // 输出的data_im的尺寸为l.c * l.h * lw，对于上面的例子，为3*5*5,因此，im_row,im_col,c的取值范围刚好填满data_im
+
+                // 获取data_col中索引为col_index的元素，对于上面的例子，data_col为27*4行，按行存储
+                // col_index = c * height_col * width_col + h * width_col + w逐行读取data_col中的每一个元素。
+                // 相同的im_row,im_col与c_im可能会对应多个不同的col_index，这就是卷积核重叠带来的影响，处理的方式是将这些val都加起来，
+                // 存在data_im的第im_row - pad行，第im_col - pad列（c_im通道上）中。
+                // 比如上面的例子，上面的例子，如果固定im_row = 0, im_col =2, c_im =0，由c_im = 0可以知道c在0~8之间，由im_row=0,可以确定h = 0, h_offset =0，
+                // 可以得到两组：1)w_offset = 0, w = 1; 2) w_offset = 2, w =0，第一组，则可以完全定下：c=0,h=0,w=1，此时col_index=1，由第二组，可完全定下：c=2,h=0,w=0，
+                // 此时col_index = 2*2*2=8
+                int col_index = (c * height_col + h) * width_col + w;
+                double val = data_col[col_index];
+
+                // 从data_im找出c_im通道上第im_row - pad行im_col - pad列处的像素，使其加上val
+                // height, width, channels都是上一层输出即当前层输入图像的尺寸，也是data_im的尺寸（对于本例子，三者的值分别为5,5,3）,
+                // im_row - pad,im_col - pad,c_im都是某一具体元素在data_im中的行数与列数与通道数（因为im_row与im_col是根据卷积过程计算的，
+                // 所以im_col和im_row中实际还包含了补零长度pad，需要减去之后，才是原本的没有补零矩阵data_im中的行列号）
+                col2im_add_pixel(data_im, height, width, channels,
+                        im_row, im_col, c_im, pad, val);
+            }
+        }
+    }
+}

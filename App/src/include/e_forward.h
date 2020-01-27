@@ -14,4 +14,7 @@ int e_forward_connected_layer(layer l, network net);
 int e_forward_maxpool_layer(layer l, network net);
 int e_forward_convolutional_layer(layer l, network net);
 int e_forward_cost_layer(const layer l, network net);
+int e_backward_convolutional_layer(layer l, network net);
+int e_normalize_array(float *a, size_t arr_len, size_t batch);
+
 #endif

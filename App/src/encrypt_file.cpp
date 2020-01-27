@@ -18,12 +18,13 @@ void encrypt_csv(char* filename_plaintext, char* filename_ciphertext, unsigned c
     int label_encrypt = 1;
     char* line;
     char* base_out = nullptr;
+    int i = 0;
     while((line = fgetl(fp_plain))) {       // not a number
         if (48 > line[0] || line[0] > 57)
             continue;
+        i ++;
         int fields = count_fields(line);
         float* input = parse_fields(line, fields, NULL);
-        int i;
         if(label_encrypt) {
             rc4_crypt(passwd, passwd_len, (unsigned char *)input, 4 * 1); // label 单独加密
             rc4_crypt(passwd, passwd_len, (unsigned char *)(input + 1), 4 * (fields - 1));  // 加密除label外的数据部分
@@ -48,14 +49,19 @@ void encrypt_csv(char* filename_plaintext, char* filename_ciphertext, unsigned c
         FILE *fp_cipher = fopen(filename_ciphertext, "a");
 
     }
+    printf("encryped % lines\n", i);
     fclose(fp_plain);
     fclose(fp_cipher); 
 }
 
-void decrypt_csv(char* filename_ciphertext, unsigned char* passwd, size_t passwd_len) {
+void decrypt_csv(char* filename_ciphertext, unsigned char* passwd, size_t passwd_len, int times = 4) {
+    int j = 0;
     FILE *fp_cipher = fopen(filename_ciphertext, "r");
     char* line;
     while((line = fgetl(fp_cipher))) {
+        j ++;
+
+        if(j > times) continue;
         int line_size = count_from_base64(line);
         int base_out_len = ceil(line_size / 3.0) * 4;
         int fields = line_size / 4;
@@ -64,14 +70,16 @@ void decrypt_csv(char* filename_ciphertext, unsigned char* passwd, size_t passwd
         base64_decode((const char*)line, base_out_len, base_out);
         float* p;
         p = (float*)base_out;
-        rc4_crypt(passwd, passwd_len, (unsigned char *)base_out, 4 * fields);
-        for(int i=0; i< fields;i++) {
+        rc4_crypt(passwd, passwd_len, (unsigned char *)base_out, 4 * 1);
+        rc4_crypt(passwd, passwd_len, (unsigned char *)(base_out + 4), 4 * (fields - 1));
+        for(int i = 0; i< fields; i++) {
             printf("%.2f ", ((float*)base_out)[i]);
         }
         printf("\n");
         delete[] base_out;
         free(line);
     }
+    printf("decrypted %d lines\n", j);
     fclose(fp_cipher); 
 }
 

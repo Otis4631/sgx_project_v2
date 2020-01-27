@@ -56,8 +56,8 @@ int destory_enclave(void)
 
 void encrypt() {
     unsigned char passwd[] = "lizheng";
-    encrypt_csv("data/bp_test.csv", "data/e_bp_test.csv",(unsigned char *)passwd, sizeof(passwd));
-    decrypt_csv("data/e_bp_test.csv",(unsigned char *)passwd,sizeof(passwd));
+    encrypt_csv("data/train.csv", "data/e_train.csv",(unsigned char *)passwd, sizeof(passwd));
+    decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
 }
 
 int main(int argc, char ** argv){
@@ -70,15 +70,12 @@ int main(int argc, char ** argv){
     printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
    // predict("data/conv_test.cfg", "cfg/mynet.cfg", NULL);
     if(0==strcmp(argv[1], "t"))
-        train("data/bp_test.cfg", "cfg/bp_test.cfg", "backup/test_weights");
+        train("data/e_train.cfg", "cfg/e_mynet.cfg", NULL);
     else if(0==strcmp(argv[1], "e"))
         encrypt();
     else
     {
         printf("Unknown args\n");
     }
-    
-
     destory_enclave();
-
 }

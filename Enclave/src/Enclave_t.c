@@ -27,6 +27,12 @@
 )
 
 
+typedef struct ms_ecall_normalize_array_t {
+	float* ms_array;
+	size_t ms_arr_len;
+	size_t ms_batch;
+} ms_ecall_normalize_array_t;
+
 typedef struct ms_ecall_gemm_t {
 	int ms_TA;
 	int ms_TB;
@@ -142,6 +148,31 @@ typedef struct ms_ecall_forward_cost_layer_t {
 	float* ms_cost;
 } ms_ecall_forward_cost_layer_t;
 
+typedef struct ms_ecall_backward_convolutional_layer_t {
+	size_t ms_batch;
+	size_t ms_m;
+	size_t ms_size;
+	size_t ms_ic;
+	size_t ms_out_h;
+	size_t ms_out_w;
+	size_t ms_h;
+	size_t ms_w;
+	size_t ms_stride;
+	size_t ms_pad;
+	size_t ms_bias_len;
+	size_t ms_output_len;
+	size_t ms_input_len;
+	size_t ms_weight_len;
+	ACTIVATION ms_activation;
+	float* ms_output;
+	float* ms_input;
+	float* ms_delta;
+	float* ms_ndelta;
+	float* ms_weight;
+	float* ms_bias_updates;
+	float* ms_weight_updates;
+} ms_ecall_backward_convolutional_layer_t;
+
 typedef struct ms_ecall_backward_cost_layer_t {
 	size_t ms_input_size;
 	int ms_scale;
@@ -176,6 +207,64 @@ static sgx_status_t SGX_CDECL sgx_hello(void* pms)
 	sgx_status_t status = SGX_SUCCESS;
 	if (pms != NULL) return SGX_ERROR_INVALID_PARAMETER;
 	hello();
+	return status;
+}
+
+static sgx_status_t SGX_CDECL sgx_ecall_normalize_array(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_normalize_array_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_ecall_normalize_array_t* ms = SGX_CAST(ms_ecall_normalize_array_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	float* _tmp_array = ms->ms_array;
+	size_t _tmp_arr_len = ms->ms_arr_len;
+	size_t _len_array = _tmp_arr_len * sizeof(float);
+	float* _in_array = NULL;
+
+	if (sizeof(*_tmp_array) != 0 &&
+		(size_t)_tmp_arr_len > (SIZE_MAX / sizeof(*_tmp_array))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	CHECK_UNIQUE_POINTER(_tmp_array, _len_array);
+
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+
+	if (_tmp_array != NULL && _len_array != 0) {
+		if ( _len_array % sizeof(*_tmp_array) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_array = (float*)malloc(_len_array);
+		if (_in_array == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_array, _len_array, _tmp_array, _len_array)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_normalize_array(_in_array, _tmp_arr_len, ms->ms_batch);
+	if (_in_array) {
+		if (memcpy_s(_tmp_array, _len_array, _in_array, _len_array)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+
+err:
+	if (_in_array) free(_in_array);
 	return status;
 }
 
@@ -1120,6 +1209,247 @@ err:
 	return status;
 }
 
+static sgx_status_t SGX_CDECL sgx_ecall_backward_convolutional_layer(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_backward_convolutional_layer_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_ecall_backward_convolutional_layer_t* ms = SGX_CAST(ms_ecall_backward_convolutional_layer_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	float* _tmp_output = ms->ms_output;
+	size_t _tmp_output_len = ms->ms_output_len;
+	size_t _len_output = _tmp_output_len * sizeof(float);
+	float* _in_output = NULL;
+	float* _tmp_input = ms->ms_input;
+	size_t _tmp_input_len = ms->ms_input_len;
+	size_t _len_input = _tmp_input_len * sizeof(float);
+	float* _in_input = NULL;
+	float* _tmp_delta = ms->ms_delta;
+	size_t _len_delta = _tmp_output_len * sizeof(float);
+	float* _in_delta = NULL;
+	float* _tmp_ndelta = ms->ms_ndelta;
+	size_t _len_ndelta = _tmp_input_len * sizeof(float);
+	float* _in_ndelta = NULL;
+	float* _tmp_weight = ms->ms_weight;
+	size_t _tmp_weight_len = ms->ms_weight_len;
+	size_t _len_weight = _tmp_weight_len * sizeof(float);
+	float* _in_weight = NULL;
+	float* _tmp_bias_updates = ms->ms_bias_updates;
+	size_t _tmp_bias_len = ms->ms_bias_len;
+	size_t _len_bias_updates = _tmp_bias_len * sizeof(float);
+	float* _in_bias_updates = NULL;
+	float* _tmp_weight_updates = ms->ms_weight_updates;
+	size_t _len_weight_updates = _tmp_weight_len * sizeof(float);
+	float* _in_weight_updates = NULL;
+
+	if (sizeof(*_tmp_output) != 0 &&
+		(size_t)_tmp_output_len > (SIZE_MAX / sizeof(*_tmp_output))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_input) != 0 &&
+		(size_t)_tmp_input_len > (SIZE_MAX / sizeof(*_tmp_input))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_delta) != 0 &&
+		(size_t)_tmp_output_len > (SIZE_MAX / sizeof(*_tmp_delta))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_ndelta) != 0 &&
+		(size_t)_tmp_input_len > (SIZE_MAX / sizeof(*_tmp_ndelta))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_weight) != 0 &&
+		(size_t)_tmp_weight_len > (SIZE_MAX / sizeof(*_tmp_weight))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_bias_updates) != 0 &&
+		(size_t)_tmp_bias_len > (SIZE_MAX / sizeof(*_tmp_bias_updates))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_weight_updates) != 0 &&
+		(size_t)_tmp_weight_len > (SIZE_MAX / sizeof(*_tmp_weight_updates))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	CHECK_UNIQUE_POINTER(_tmp_output, _len_output);
+	CHECK_UNIQUE_POINTER(_tmp_input, _len_input);
+	CHECK_UNIQUE_POINTER(_tmp_delta, _len_delta);
+	CHECK_UNIQUE_POINTER(_tmp_ndelta, _len_ndelta);
+	CHECK_UNIQUE_POINTER(_tmp_weight, _len_weight);
+	CHECK_UNIQUE_POINTER(_tmp_bias_updates, _len_bias_updates);
+	CHECK_UNIQUE_POINTER(_tmp_weight_updates, _len_weight_updates);
+
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+
+	if (_tmp_output != NULL && _len_output != 0) {
+		if ( _len_output % sizeof(*_tmp_output) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_output = (float*)malloc(_len_output);
+		if (_in_output == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_output, _len_output, _tmp_output, _len_output)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_input != NULL && _len_input != 0) {
+		if ( _len_input % sizeof(*_tmp_input) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_input = (float*)malloc(_len_input);
+		if (_in_input == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_input, _len_input, _tmp_input, _len_input)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_delta != NULL && _len_delta != 0) {
+		if ( _len_delta % sizeof(*_tmp_delta) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_delta = (float*)malloc(_len_delta);
+		if (_in_delta == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_delta, _len_delta, _tmp_delta, _len_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_ndelta != NULL && _len_ndelta != 0) {
+		if ( _len_ndelta % sizeof(*_tmp_ndelta) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_ndelta = (float*)malloc(_len_ndelta);
+		if (_in_ndelta == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_ndelta, _len_ndelta, _tmp_ndelta, _len_ndelta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_weight != NULL && _len_weight != 0) {
+		if ( _len_weight % sizeof(*_tmp_weight) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_weight = (float*)malloc(_len_weight);
+		if (_in_weight == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_weight, _len_weight, _tmp_weight, _len_weight)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_bias_updates != NULL && _len_bias_updates != 0) {
+		if ( _len_bias_updates % sizeof(*_tmp_bias_updates) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_bias_updates = (float*)malloc(_len_bias_updates);
+		if (_in_bias_updates == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_bias_updates, _len_bias_updates, _tmp_bias_updates, _len_bias_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_weight_updates != NULL && _len_weight_updates != 0) {
+		if ( _len_weight_updates % sizeof(*_tmp_weight_updates) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_weight_updates = (float*)malloc(_len_weight_updates);
+		if (_in_weight_updates == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_weight_updates, _len_weight_updates, _tmp_weight_updates, _len_weight_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_backward_convolutional_layer(ms->ms_batch, ms->ms_m, ms->ms_size, ms->ms_ic, ms->ms_out_h, ms->ms_out_w, ms->ms_h, ms->ms_w, ms->ms_stride, ms->ms_pad, _tmp_bias_len, _tmp_output_len, _tmp_input_len, _tmp_weight_len, ms->ms_activation, _in_output, _in_input, _in_delta, _in_ndelta, _in_weight, _in_bias_updates, _in_weight_updates);
+	if (_in_ndelta) {
+		if (memcpy_s(_tmp_ndelta, _len_ndelta, _in_ndelta, _len_ndelta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_bias_updates) {
+		if (memcpy_s(_tmp_bias_updates, _len_bias_updates, _in_bias_updates, _len_bias_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_weight_updates) {
+		if (memcpy_s(_tmp_weight_updates, _len_weight_updates, _in_weight_updates, _len_weight_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+
+err:
+	if (_in_output) free(_in_output);
+	if (_in_input) free(_in_input);
+	if (_in_delta) free(_in_delta);
+	if (_in_ndelta) free(_in_ndelta);
+	if (_in_weight) free(_in_weight);
+	if (_in_bias_updates) free(_in_bias_updates);
+	if (_in_weight_updates) free(_in_weight_updates);
+	return status;
+}
+
 static sgx_status_t SGX_CDECL sgx_ecall_backward_cost_layer(void* pms)
 {
 	CHECK_REF_POINTER(pms, sizeof(ms_ecall_backward_cost_layer_t));
@@ -1462,11 +1792,12 @@ err:
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[11];
+	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[13];
 } g_ecall_table = {
-	11,
+	13,
 	{
 		{(void*)(uintptr_t)sgx_hello, 0, 0},
+		{(void*)(uintptr_t)sgx_ecall_normalize_array, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_gemm, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_activate_array, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_avgpool_forward, 0, 0},
@@ -1475,6 +1806,7 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_forward_convolutional_layer, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_rc4_crypt, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_forward_cost_layer, 0, 0},
+		{(void*)(uintptr_t)sgx_ecall_backward_convolutional_layer, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_backward_cost_layer, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_backward_connected_layer, 0, 0},
 	}
@@ -1482,11 +1814,11 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[1][11];
+	uint8_t entry_table[1][13];
 } g_dyn_entry_table = {
 	1,
 	{
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 

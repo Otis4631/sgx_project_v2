@@ -6,6 +6,7 @@
 #include "data.h"
 #include "utils.h"
 #include "blas.h"
+#include "e_forward.h"
 
 #include "connected_layer.h"
 #include "local_layer.h"
@@ -334,8 +335,17 @@ float train_network(network* net, data d)
         // 从d中读取batch张图片到net->input中，进行训练
         // 第一个参数d包含了net->batch*net->subdivision张图片的数据，第二个参数batch即为每次循环读入到net->input也即参与train_network_datum()
         // 训练的图片张数，第三个参数为在d中的偏移量，第四个参数为网络的输入数据，第五个参数为输入数据net->input对应的标签数据（真实数据）
-        get_next_batch(d, batch, i*batch, net->input, net->truth);
-
+        get_next_batch(d, batch, i * batch, net->input, net->truth);
+        if(net->layers[0].sgx)
+            e_normalize_array(net->input, net->h * net->w * net->c * net->batch, net->batch);
+        else
+        {
+            int offset = 0;
+            for(int i = 0; i < net->batch; i++){
+                offset = i * (net->h * net-> c * net->w);
+                normalize_array(net->input + offset, net->h * net->w * net->c);
+            }
+        }
         // 训练网络：本次训练的数据共有net->batch张图片。
         // 训练包括一次前向过程：计算每一层网络的输出并计算cost；一次反向过程：计算敏感度、权重更新值、偏置更新值；适时更新过程：更新权重与偏置
         float err = train_network_datum(net);

@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "image.h"
 #include "cuda.h"
+#include "e_forward.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,12 +149,12 @@ data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt, i
         memcpy(foo_y, tmp, sizeof(float));
 
         x.vals[i] = foo_x;
-        if(normalize)
-            normalize_array(x.vals[i], fig_size);
+
         y.vals[i] = foo_y;
         free(line);
         free(tmp);
     }
+
     d.X = x;
     d.y = y;
     return d;
@@ -1042,10 +1043,11 @@ void get_next_batch(data d, int n, int offset, float *X, float *y)
         // memcpy(void* destination,const void *source,size_t num);函数用来复制块内存，常用于数组间的复制赋值（指针所指内容复制，不是指针复制）
         // 此处将d.X中的数据d.X.vals中的某一行深拷贝至输入X中
         memcpy(X+j*d.X.cols, d.X.vals[index], d.X.cols*sizeof(float));
-
+        
         // 如果y也分配了内存（也有这个需求），那么也将d.y中的某一行拷贝至y中
         if(y) memcpy(y+j*d.y.cols, d.y.vals[index], d.y.cols*sizeof(float));
     }
+
 }
 
 void smooth_data(data d)

@@ -95,6 +95,14 @@ int e_forward_maxpool_layer(layer l, network net){
                         l.indexes);
 }
 
+int e_normalize_array(float *a, size_t arr_len, size_t batch) {
+    sgx_status_t ret = ecall_normalize_array(EID, a, arr_len, batch); 
+    if(ret != SGX_SUCCESS)
+        {
+            printf("someting goes wrong with normalization!\n");
+            return ;
+        }
+}
 
 int e_forward_cost_layer(layer l, network net)
 {

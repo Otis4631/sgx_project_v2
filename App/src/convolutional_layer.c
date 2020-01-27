@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include <time.h>
 
-
-
 void swap_binary(convolutional_layer *l)
 {
     float *swap = l->weights;
@@ -187,11 +185,12 @@ convolutional_layer make_convolutional_layer(int sgx, int batch,int h, int w, in
     l.delta  = calloc(l.batch*l.outputs, sizeof(float));
 
     // 卷积层三种指针函数，对应三种计算：前向，反向，更新
-    if(l.sgx)
-        l.forward = e_forward_convolutional_layer;
-    else
-        l.forward = forward_convolutional_layer;
-    l.backward = backward_convolutional_layer;
+     l.forward = forward_convolutional_layer;
+     l.backward = backward_convolutional_layer;
+    if(l.sgx) {
+         l.forward = e_forward_convolutional_layer;
+         l.backward = e_backward_convolutional_layer;
+    }  
     l.update = update_convolutional_layer;
     if(binary){
         l.binary_weights = calloc(c*n*size*size, sizeof(float));
