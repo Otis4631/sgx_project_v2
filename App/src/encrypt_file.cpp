@@ -25,6 +25,12 @@ void encrypt_csv(char* filename_plaintext, char* filename_ciphertext, unsigned c
         i ++;
         int fields = count_fields(line);
         float* input = parse_fields(line, fields, NULL);
+        if(i < 4)
+        {
+            for(int j=0;j<fields;j++)
+                printf("%.2f ", input[j]);
+            printf("\n");
+        }
         if(label_encrypt) {
             rc4_crypt(passwd, passwd_len, (unsigned char *)input, 4 * 1); // label 单独加密
             rc4_crypt(passwd, passwd_len, (unsigned char *)(input + 1), 4 * (fields - 1));  // 加密除label外的数据部分
@@ -72,7 +78,7 @@ void decrypt_csv(char* filename_ciphertext, unsigned char* passwd, size_t passwd
         p = (float*)base_out;
         rc4_crypt(passwd, passwd_len, (unsigned char *)base_out, 4 * 1);
         rc4_crypt(passwd, passwd_len, (unsigned char *)(base_out + 4), 4 * (fields - 1));
-        for(int i = 0; i< fields; i++) {
+        for(int i = 0; i < fields; i++) {
             printf("%.2f ", ((float*)base_out)[i]);
         }
         printf("\n");

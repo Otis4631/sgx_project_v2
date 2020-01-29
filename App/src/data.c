@@ -114,7 +114,7 @@ data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt, i
     y.rows = n;
     y.vals = calloc(y.rows, sizeof(float*));
     y.cols = 1;
-
+    srand (1);
     for(int i = 0; i < n; ++i){
         size_t index = (size_t)rand() % m;
         indices[i] = index;

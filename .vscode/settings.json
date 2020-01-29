@@ -77,9 +77,7 @@
         "network.h": "c",
         "cuda.h": "c",
         "utils.h": "c",
-        "types.h": "c",
-        "enclave.h": "c",
-        "rc4.h": "c"
+        "types.h": "c"
     },
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
     "git.ignoreLimitWarning": true,

@@ -27,6 +27,7 @@ void backward_bias(float *bias_updates, float *delta, int batch, int n, int size
         for(i = 0; i < n; ++i){
             bias_updates[i] += sum_array(delta+size*(i+b*n), size);
         }
+        int k66;
     }
 }
 void add_bias(float *output, float *biases, int batch, int n, int size)

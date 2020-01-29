@@ -99,7 +99,7 @@ void ecall_backward_convolutional_layer(size_t batch ,size_t m, size_t size, siz
     if(0 /*l.batch_normalize*/){
         //backward_batchnorm_layer(l, net);
     } else {
-        backward_bias(bias_updates, delta, batch, n, k);
+        backward_bias(bias_updates, delta, batch, m, k);
     }
     for(i = 0; i < batch; ++i){
         float *a = delta + i * m * k;
