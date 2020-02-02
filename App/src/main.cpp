@@ -3,8 +3,11 @@
 #include <stdio.h>
 #include <time.h>
 #include <iostream>
+#include <sgx_uswitchless.h>
+
 #include "classifier.h"
 #include "encrypt_file.h"
+
 
 using namespace std;
 
@@ -21,18 +24,24 @@ extern "C"{
     extern void predict(char *datacfg, char *cfgfile, char *weightfile);
     extern void train(char *datacfg, char *cfgfile, char *weightfile);
     #include "base64.h"
+    #include "sgx_err.h"
 }
 
 
-int initialize_enclave(void)
+int initialize_enclave(const sgx_uswitchless_config_t* us_config)
 {
     sgx_status_t ret = SGX_ERROR_UNEXPECTED;
-    
+
     /* Call sgx_create_enclave to initialize an enclave instance */
     /* Debug Support: set 2nd parameter to 1 */
-    ret = sgx_create_enclave(ENCLAVE_FILENAME, 1, NULL, NULL, &EID, NULL);
+
+    const void* enclave_ex_p[32] = { 0 };
+
+    // enclave_ex_p[SGX_CREATE_ENCLAVE_EX_SWITCHLESS_BIT_IDX] = (const void*)us_config;
+    ret = sgx_create_enclave(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, &EID, NULL);
+   // ret = sgx_create_enclave_ex(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, &EID, NULL, SGX_CREATE_ENCLAVE_EX_SWITCHLESS, enclave_ex_p);
     if (ret != SGX_SUCCESS) {
-        printf("error when init enclave\n");
+        print_error_message(ret);
         return -1;
     }
 
@@ -65,9 +74,15 @@ int main(int argc, char ** argv){
         printf("No args\n");
         return -1;
     }
+    /* Configuration for Switchless SGX */
+    sgx_uswitchless_config_t us_config = SGX_USWITCHLESS_CONFIG_INITIALIZER;
+    us_config.num_uworkers = 4;
+    us_config.num_tworkers = 4;
     time_t t = clock();
-    initialize_enclave();
-    printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
+    if(initialize_enclave(&us_config) == 0)
+        printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
+    else
+        return -1;
    // predict("data/conv_test.cfg", "cfg/mynet.cfg", NULL);
     if(0 == strcmp(argv[1], "t"))
         train("data/e_train.cfg", "cfg/e_mynet.cfg", NULL);

@@ -140,13 +140,13 @@ void train_csv(network* net, list* data_options) {
         }
     }
     
-    pthread_join(load_thread, 0);
-    net->input = buffer.X.vals[0];
+    // pthread_join(load_thread, 0);
+    // net->input = buffer.X.vals[0];
 
-    forward_network(net);
-    float *out = net->output;
-    crypt_aux(pass, pass_len, (unsigned char *)out, sizeof(float), 1);
-    printf("OUT:%f\n", *out);
+    // forward_network(net);
+    // float *out = net->output;
+    // crypt_aux(pass, pass_len, (unsigned char *)out, sizeof(float), 1);
+    // printf("OUT:%f\n", *out);
     char buff[256];
     sprintf(buff, "%s/%s.weights", backup_directory, base);
     save_weights(*net, buff);

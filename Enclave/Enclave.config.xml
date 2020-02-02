@@ -18,7 +18,7 @@
 <HeapMaxSize>0x280000000</HeapMaxSize>  -->
 
   <TCSNum>10</TCSNum>
-  <TCSPolicy>1</TCSPolicy>
+  <TCSPolicy>0</TCSPolicy>
   <!-- Recommend changing 'DisableDebug' to 1 to make the enclave undebuggable for enclave release -->
   <DisableDebug>0</DisableDebug>
   <MiscSelect>0</MiscSelect>

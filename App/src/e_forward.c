@@ -1,5 +1,6 @@
 #include "e_forward.h"
 #include "Enclave_u.h"
+#include "sgx_err.h"
 #include "layer.h"
 #include "network.h"
 #include "blas.h" // fill_cpu
@@ -30,31 +31,26 @@ int e_gemm(int TA, int TB, int M, int N, int K, float ALPHA,
 int e_forward_convolutional_layer(layer l, network net)
 {
 
-    // void ecall_forward_convolutional_layer(int batch,int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, 
-    //                                    float * weights, int weight_len,
-    //                                    float * input, int in_len,
-    //                                    float * output, int out_len,
-    //                                    float * biases, int bias_len,
-    //                                    ACTIVATION activation
-    //                                    )
-      fill_cpu(l.outputs*l.batch, 0, l.output, 1);
-        int m = l.n;                // 该层卷积核个数
-        int k = l.size * l.size * l.c;  // 该层每个卷积核的参数元素个数
-        int n = l.out_h * l.out_w;        // 该层每个特征图的尺寸（元素个数）
+    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
+    int m = l.n;                // 该层卷积核个数
+    int k = l.size * l.size * l.c;  // 该层每个卷积核的参数元素个数
+    int n = l.out_h * l.out_w;        // 该层每个特征图的尺寸（元素个数）
 
-           // gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
+        // gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
 
-        long a_size = k * m;
-        long b_size = n * k;
-        long c_size = n * m;
-      ecall_forward_convolutional_layer(EID, l.batch, l.c, l.h, l.w, l.size, l.stride, l.pad, l.n, l.out_h, l.out_w, 
-                                            l.weights, a_size, 
-                                            net.input, l.inputs * l.batch,
-                                            l.output, l.batch * l.outputs, 
-                                            l.biases, l.n,
-                                            l.activation);
-
-
+    long a_size = k * m;
+    long b_size = n * k;
+    long c_size = n * m;
+    sgx_status_t ret = ecall_forward_convolutional_layer(EID, l.batch, l.c, l.h, l.w, l.size, l.stride, l.pad, l.n, l.out_h, l.out_w, 
+                                        l.weights, a_size, 
+                                        net.input, l.inputs * l.batch,
+                                        l.output, l.batch * l.outputs, 
+                                        l.biases, l.n,
+                                        l.activation);
+    if(ret != SGX_SUCCESS) {
+        print_error_message(ret);
+        return -1;
+    }
 
 }
 
@@ -81,7 +77,6 @@ int e_forward_connected_layer(layer l, network net) {
     
     sgx_status_t ret = ecall_forward_connected_layer(EID,0,1,m,n,k,1,a,k,b,k,1,c,n,a_size,b_size,c_size,l.biases,l.outputs,l.activation);
     if(ret != SGX_SUCCESS) {
-        printf("file:ecall_layer_forward.c: ERROR when doing ecall_forward_connected_layer!\n");
         print_error_message(ret);
         return -1;
     }
@@ -99,8 +94,8 @@ int e_normalize_array(float *a, size_t arr_len, size_t batch) {
     sgx_status_t ret = ecall_normalize_array(EID, a, arr_len, batch); 
     if(ret != SGX_SUCCESS)
         {
-            printf("someting goes wrong with normalization!\n");
-            return ;
+            print_error_message(ret);
+            return -1;
         }
 }
 
@@ -109,7 +104,7 @@ int e_forward_cost_layer(layer l, network net)
     sgx_status_t ret = ecall_forward_cost_layer(EID, l.cost_type, l.batch, l.inputs, net.input, l.batch*l.inputs, net.truth,l.delta, l.output, l.cost); 
     if(ret != SGX_SUCCESS)
         {
-            printf("someting goes wrong with forward cost layer!\n");
-            return ;
+            print_error_message(ret);
+            return -1;
         }
 }
