@@ -1,7 +1,7 @@
 #ifndef BASE_LAYER_H
 #define BASE_LAYER_H
 
-#include "e_activation.h"
+#include "types.h"
 #include "stddef.h"
 //#include "tree.h"
 
@@ -11,39 +11,6 @@ typedef struct network network;
 struct layer;
 typedef struct layer layer;
 
-/** 
- * 网络结构类型（枚举类型），对应的整型值由CONVOLUTIONAL从0开始往下编号，共24中网络类型（最后一个对应的整型值为23）.
-*/
-typedef enum {
-    CONVOLUTIONAL,
-    DECONVOLUTIONAL,
-    CONNECTED,
-    MAXPOOL,
-    SOFTMAX,
-    DETECTION,
-    DROPOUT,
-    CROP,
-    ROUTE,
-    COST,
-    NORMALIZATION,
-    AVGPOOL,
-    LOCAL,
-    SHORTCUT,
-    ACTIVE,
-    RNN,
-    GRU,
-    CRNN,
-    BATCHNORM,
-    NETWORK,
-    XNOR,
-    REGION,
-    REORG,
-    BLANK               // 表示未识别的网络层名称
-} LAYER_TYPE;
-
-typedef enum{
-    SSE, MASKED, L1, SMOOTH
-} COST_TYPE;
 
 
 

@@ -6,7 +6,6 @@ float *random_matrix(int rows, int cols);
 void time_random_matrix(int TA, int TB, int m, int k, int n);
 void reorg_cpu(float *x, int w, int h, int c, int batch, int stride, int forward, float *out);
 
-void test_blas();
 
 void const_cpu(int N, float ALPHA, float *X, int INCX);
 void constrain_ongpu(int N, float ALPHA, float * X, int INCX);
@@ -18,7 +17,6 @@ void copy_cpu(int N, float *X, int INCX, float *Y, int INCY);
 void scal_cpu(int N, float ALPHA, float *X, int INCX);
 void fill_cpu(int N, float ALPHA, float * X, int INCX);
 float dot_cpu(int N, float *X, int INCX, float *Y, int INCY);
-void test_gpu_blas();
 void shortcut_cpu(int batch, int w1, int h1, int c1, float *add, int w2, int h2, int c2, float *out);
 
 void mean_cpu(float *x, int batch, int filters, int spatial, float *mean);

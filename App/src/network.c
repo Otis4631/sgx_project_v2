@@ -13,7 +13,6 @@
 #include "convolutional_layer.h"
 #include "activation_layer.h"
 #include "normalization_layer.h"
-#include "batchnorm_layer.h"
 #include "maxpool_layer.h"
 #include "avgpool_layer.h"
 #include "cost_layer.h"

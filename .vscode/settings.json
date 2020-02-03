@@ -78,7 +78,8 @@
         "cuda.h": "c",
         "utils.h": "c",
         "types.h": "c",
-        "e_forward.h": "c"
+        "e_forward.h": "c",
+        "blas.h": "c"
     },
     "git.ignoreLimitWarning": true,
     "python.pythonPath": "/usr/bin/python"

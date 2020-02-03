@@ -164,11 +164,7 @@ void forward_connected_layer(connected_layer l, network net)
     }
     // 前面得到的是全连接层每个输出元素的加权输入Wx，下面这个循环就是为每个元素加上偏置，最终得到每个输出元素上的加权输入：Wx+b
     // 循环次数为l.batch，不是l.outputs，是因为对于全连接层来说，l.batch = l.outputs，无所谓了～
-    for(i = 0; i < l.batch; ++i){
-        // axpy_cpu()完成l.output + i*l.outputs = l.biases + (l.output + i*l.outputs)操作
-        // l.biases的维度为l.outputs;l.output的维度为l.batch*l.outputs，包含整个batch的输出，所以需要注意移位
-        axpy_cpu(l.outputs, 1, l.biases, 1, l.output + i*l.outputs, 1);
-    }
+    add_bias(l.output, l.biases, l.batch, l.outputs, 1);
     
     // 前向传播最后一步：前面得到每一个输出元素的加权输入Wx+b,这一步利用激活函数处理l.output中的每一个输出元素，
     // 最终得到全连接层的输出f(Wx+b)

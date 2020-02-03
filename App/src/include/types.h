@@ -7,4 +7,8 @@ typedef enum{
 typedef enum{
     SSE, MASKED, L1, SMOOTH, CE
 } COST_TYPE;
+
+
+
+
 #endif

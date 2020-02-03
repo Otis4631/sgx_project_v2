@@ -3,7 +3,6 @@ enclave {
     from "backward.edl" import *;
     trusted{
                              
-        public void hello();
         public void ecall_normalize_array([in, out, count =arr_len]float * array, size_t arr_len, size_t batch);
 
         public void ecall_gemm( int TA, int TB, int M, int N, int K, float ALPHA, 
@@ -16,16 +15,20 @@ enclave {
                                             [in, count=input_len]float* input, int input_len, 
                                             [in,out,count=output_len]float* output, int output_len);
         
-
-        public void ecall_forward_connected_layer(int TA, int TB, int M, int N, int K, float ALPHA, 
-                                                    [in, count=a_size] float *A, int lda, 
-                                                    [in, count=b_size] float *B, int ldb,
-                                                    float BETA,
-                                                    [in,out, count=c_size] float *C, int ldc, 
+        public void ecall_forward_connected_layer(int TA, int TB, int M, int outputs, int K, int BN, int train,
+                                                    [in, out, count=outputs]   float *rolling_mean,
+                                                    [in, out, count=outputs]   float *rolling_variance,
+                                                    [in, out, count=outputs]   float *scales,
+                                                    [in, out, count=c_size]    float *x,                                                    
+                                                    [in, out, count=c_size]    float *x_norm,
+                                                    [in, count=a_size]         float *A, int lda, 
+                                                    [in, count=b_size]         float *B, int ldb,
+                                                    [in, out, count=c_size]    float *C, int ldc, 
                                                     long a_size, long b_size, long c_size,
-                                                    [in, count=bias_len] float* bias,
-                                                    int bias_len,
+                                                    [in, count=outputs]         float* bias,
                                                     ACTIVATION a);
+
+                
 
         public void ecall_forward_maxpool_layer(int pad, int h,int w, int out_h, int out_w, int c, int batch, int size, int stride, 
                         [in, count=input_len] float *input, int input_len,

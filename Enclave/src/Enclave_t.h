@@ -16,12 +16,11 @@
 extern "C" {
 #endif
 
-void hello(void);
 void ecall_normalize_array(float* array, size_t arr_len, size_t batch);
 void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, float* A, int lda, float* B, int ldb, float BETA, float* C, int ldc, int a_size, int b_size, int c_size);
 void ecall_activate_array(float* x, int n, ACTIVATION a);
 void ecall_avgpool_forward(int batch, int c, int fig_size, float* input, int input_len, float* output, int output_len);
-void ecall_forward_connected_layer(int TA, int TB, int M, int N, int K, float ALPHA, float* A, int lda, float* B, int ldb, float BETA, float* C, int ldc, long int a_size, long int b_size, long int c_size, float* bias, int bias_len, ACTIVATION a);
+void ecall_forward_connected_layer(int TA, int TB, int M, int outputs, int K, int BN, int train, float* rolling_mean, float* rolling_variance, float* scales, float* x, float* x_norm, float* A, int lda, float* B, int ldb, float* C, int ldc, long int a_size, long int b_size, long int c_size, float* bias, ACTIVATION a);
 void ecall_forward_maxpool_layer(int pad, int h, int w, int out_h, int out_w, int c, int batch, int size, int stride, float* input, int input_len, float* output, int out_len, int* indcies);
 void ecall_forward_convolutional_layer(int batch, int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, float* weights, int weight_len, float* input, int in_len, float* output, int out_len, float* biases, int bias_len, ACTIVATION activation);
 void ecall_rc4_crypt(unsigned char* key, unsigned long int key_len, unsigned char* Data, unsigned long int Len);

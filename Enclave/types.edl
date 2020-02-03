@@ -1,3 +1,38 @@
-encalve {
+enclave{
+//     include "types.h"
+//     struct ecall_layer{
+//         size_t batch;
+//         size_t inputs;
+//         size_t outputs;
+//         size_t h;
+//         size_t w;
+//         size_t c;
+//         size_t out_h;
+//         size_t out_w;
+//         size_t out_c;
 
+//         int batch_normalize;
+//         ACTIVATION a;
+
+//         size_t input_len;
+//         [in, count=input_len]       float* input;
+        
+//         size_t output_len;
+//         [in, out, count=outputs]    float* output;
+
+//         size_t weight_len;
+//         [in, count=weight_len]      float* weights;
+        
+//         size_t bias_len;
+//         [in, count=bias_len]        float* biases;
+        
+//         size_t rolling_len;
+//         [in, out, count=rolling_len]    float* rolling_mean;
+//         [in, out, count=rolling_len]    float* rolling_variance;
+
+//         size_t x_len;
+//         [in, out, count=x_len]      float* x;
+//         [in, out, count=x_len]      float* x_norm;
+
+//         };
 }

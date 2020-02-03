@@ -10,6 +10,19 @@ int printf(const char* fmt, ...)
     ocall_print_string(buf);
     return (int)strnlen(buf, BUFSIZ - 1) + 1;
 }
+
+void scale_bias(float *output, float *scales, int batch, int n, int size)
+{
+    int i,j,b;
+    for(b = 0; b < batch; ++b){
+        for(i = 0; i < n; ++i){
+            for(j = 0; j < size; ++j){
+                output[(b*n + i)*size + j] *= scales[i];
+            }
+        }
+    }
+}
+
 void ecall_activate_array(float *x, int n, ACTIVATION a) {
     crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)x, 4, n);
     activate_array(x, n, a);

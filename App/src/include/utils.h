@@ -7,6 +7,7 @@
 #define SECRET_NUM -1234
 #define TWO_PI 6.2831853071795864769252866
 
+void add_bias(float *output, float *biases, int batch, int n, int size);
 float* read_from_base64(char* line, float* out);
 int count_from_base64(char *line);
 int *read_intlist(char *s, int *n, int d);

@@ -72,21 +72,25 @@ typedef struct ms_ecall_forward_connected_layer_t {
 	int ms_TA;
 	int ms_TB;
 	int ms_M;
-	int ms_N;
+	int ms_outputs;
 	int ms_K;
-	float ms_ALPHA;
+	int ms_BN;
+	int ms_train;
+	float* ms_rolling_mean;
+	float* ms_rolling_variance;
+	float* ms_scales;
+	float* ms_x;
+	float* ms_x_norm;
 	float* ms_A;
 	int ms_lda;
 	float* ms_B;
 	int ms_ldb;
-	float ms_BETA;
 	float* ms_C;
 	int ms_ldc;
 	long int ms_a_size;
 	long int ms_b_size;
 	long int ms_c_size;
 	float* ms_bias;
-	int ms_bias_len;
 	ACTIVATION ms_a;
 } ms_ecall_forward_connected_layer_t;
 
@@ -201,14 +205,6 @@ typedef struct ms_ecall_backward_connected_layer_t {
 typedef struct ms_ocall_print_string_t {
 	const char* ms_str;
 } ms_ocall_print_string_t;
-
-static sgx_status_t SGX_CDECL sgx_hello(void* pms)
-{
-	sgx_status_t status = SGX_SUCCESS;
-	if (pms != NULL) return SGX_ERROR_INVALID_PARAMETER;
-	hello();
-	return status;
-}
 
 static sgx_status_t SGX_CDECL sgx_ecall_normalize_array(void* pms)
 {
@@ -538,6 +534,23 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 	sgx_lfence();
 	ms_ecall_forward_connected_layer_t* ms = SGX_CAST(ms_ecall_forward_connected_layer_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
+	float* _tmp_rolling_mean = ms->ms_rolling_mean;
+	int _tmp_outputs = ms->ms_outputs;
+	size_t _len_rolling_mean = _tmp_outputs * sizeof(float);
+	float* _in_rolling_mean = NULL;
+	float* _tmp_rolling_variance = ms->ms_rolling_variance;
+	size_t _len_rolling_variance = _tmp_outputs * sizeof(float);
+	float* _in_rolling_variance = NULL;
+	float* _tmp_scales = ms->ms_scales;
+	size_t _len_scales = _tmp_outputs * sizeof(float);
+	float* _in_scales = NULL;
+	float* _tmp_x = ms->ms_x;
+	long int _tmp_c_size = ms->ms_c_size;
+	size_t _len_x = _tmp_c_size * sizeof(float);
+	float* _in_x = NULL;
+	float* _tmp_x_norm = ms->ms_x_norm;
+	size_t _len_x_norm = _tmp_c_size * sizeof(float);
+	float* _in_x_norm = NULL;
 	float* _tmp_A = ms->ms_A;
 	long int _tmp_a_size = ms->ms_a_size;
 	size_t _len_A = _tmp_a_size * sizeof(float);
@@ -547,13 +560,36 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 	size_t _len_B = _tmp_b_size * sizeof(float);
 	float* _in_B = NULL;
 	float* _tmp_C = ms->ms_C;
-	long int _tmp_c_size = ms->ms_c_size;
 	size_t _len_C = _tmp_c_size * sizeof(float);
 	float* _in_C = NULL;
 	float* _tmp_bias = ms->ms_bias;
-	int _tmp_bias_len = ms->ms_bias_len;
-	size_t _len_bias = _tmp_bias_len * sizeof(float);
+	size_t _len_bias = _tmp_outputs * sizeof(float);
 	float* _in_bias = NULL;
+
+	if (sizeof(*_tmp_rolling_mean) != 0 &&
+		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_rolling_mean))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_rolling_variance) != 0 &&
+		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_rolling_variance))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_scales) != 0 &&
+		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_scales))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x) != 0 &&
+		(size_t)_tmp_c_size > (SIZE_MAX / sizeof(*_tmp_x))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x_norm) != 0 &&
+		(size_t)_tmp_c_size > (SIZE_MAX / sizeof(*_tmp_x_norm))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
 
 	if (sizeof(*_tmp_A) != 0 &&
 		(size_t)_tmp_a_size > (SIZE_MAX / sizeof(*_tmp_A))) {
@@ -571,10 +607,15 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 	}
 
 	if (sizeof(*_tmp_bias) != 0 &&
-		(size_t)_tmp_bias_len > (SIZE_MAX / sizeof(*_tmp_bias))) {
+		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_bias))) {
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
+	CHECK_UNIQUE_POINTER(_tmp_rolling_mean, _len_rolling_mean);
+	CHECK_UNIQUE_POINTER(_tmp_rolling_variance, _len_rolling_variance);
+	CHECK_UNIQUE_POINTER(_tmp_scales, _len_scales);
+	CHECK_UNIQUE_POINTER(_tmp_x, _len_x);
+	CHECK_UNIQUE_POINTER(_tmp_x_norm, _len_x_norm);
 	CHECK_UNIQUE_POINTER(_tmp_A, _len_A);
 	CHECK_UNIQUE_POINTER(_tmp_B, _len_B);
 	CHECK_UNIQUE_POINTER(_tmp_C, _len_C);
@@ -585,6 +626,96 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 	//
 	sgx_lfence();
 
+	if (_tmp_rolling_mean != NULL && _len_rolling_mean != 0) {
+		if ( _len_rolling_mean % sizeof(*_tmp_rolling_mean) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_rolling_mean = (float*)malloc(_len_rolling_mean);
+		if (_in_rolling_mean == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_rolling_mean, _len_rolling_mean, _tmp_rolling_mean, _len_rolling_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_rolling_variance != NULL && _len_rolling_variance != 0) {
+		if ( _len_rolling_variance % sizeof(*_tmp_rolling_variance) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_rolling_variance = (float*)malloc(_len_rolling_variance);
+		if (_in_rolling_variance == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_rolling_variance, _len_rolling_variance, _tmp_rolling_variance, _len_rolling_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_scales != NULL && _len_scales != 0) {
+		if ( _len_scales % sizeof(*_tmp_scales) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_scales = (float*)malloc(_len_scales);
+		if (_in_scales == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_scales, _len_scales, _tmp_scales, _len_scales)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x != NULL && _len_x != 0) {
+		if ( _len_x % sizeof(*_tmp_x) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x = (float*)malloc(_len_x);
+		if (_in_x == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x, _len_x, _tmp_x, _len_x)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x_norm != NULL && _len_x_norm != 0) {
+		if ( _len_x_norm % sizeof(*_tmp_x_norm) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x_norm = (float*)malloc(_len_x_norm);
+		if (_in_x_norm == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x_norm, _len_x_norm, _tmp_x_norm, _len_x_norm)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
 	if (_tmp_A != NULL && _len_A != 0) {
 		if ( _len_A % sizeof(*_tmp_A) != 0)
 		{
@@ -658,7 +789,37 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 
 	}
 
-	ecall_forward_connected_layer(ms->ms_TA, ms->ms_TB, ms->ms_M, ms->ms_N, ms->ms_K, ms->ms_ALPHA, _in_A, ms->ms_lda, _in_B, ms->ms_ldb, ms->ms_BETA, _in_C, ms->ms_ldc, _tmp_a_size, _tmp_b_size, _tmp_c_size, _in_bias, _tmp_bias_len, ms->ms_a);
+	ecall_forward_connected_layer(ms->ms_TA, ms->ms_TB, ms->ms_M, _tmp_outputs, ms->ms_K, ms->ms_BN, ms->ms_train, _in_rolling_mean, _in_rolling_variance, _in_scales, _in_x, _in_x_norm, _in_A, ms->ms_lda, _in_B, ms->ms_ldb, _in_C, ms->ms_ldc, _tmp_a_size, _tmp_b_size, _tmp_c_size, _in_bias, ms->ms_a);
+	if (_in_rolling_mean) {
+		if (memcpy_s(_tmp_rolling_mean, _len_rolling_mean, _in_rolling_mean, _len_rolling_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_rolling_variance) {
+		if (memcpy_s(_tmp_rolling_variance, _len_rolling_variance, _in_rolling_variance, _len_rolling_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_scales) {
+		if (memcpy_s(_tmp_scales, _len_scales, _in_scales, _len_scales)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_x) {
+		if (memcpy_s(_tmp_x, _len_x, _in_x, _len_x)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_x_norm) {
+		if (memcpy_s(_tmp_x_norm, _len_x_norm, _in_x_norm, _len_x_norm)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
 	if (_in_C) {
 		if (memcpy_s(_tmp_C, _len_C, _in_C, _len_C)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -667,6 +828,11 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 	}
 
 err:
+	if (_in_rolling_mean) free(_in_rolling_mean);
+	if (_in_rolling_variance) free(_in_rolling_variance);
+	if (_in_scales) free(_in_scales);
+	if (_in_x) free(_in_x);
+	if (_in_x_norm) free(_in_x_norm);
 	if (_in_A) free(_in_A);
 	if (_in_B) free(_in_B);
 	if (_in_C) free(_in_C);
@@ -1792,11 +1958,10 @@ err:
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[13];
+	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[12];
 } g_ecall_table = {
-	13,
+	12,
 	{
-		{(void*)(uintptr_t)sgx_hello, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_normalize_array, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_gemm, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_activate_array, 0, 0},
@@ -1814,11 +1979,11 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[1][13];
+	uint8_t entry_table[1][12];
 } g_dyn_entry_table = {
 	1,
 	{
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 

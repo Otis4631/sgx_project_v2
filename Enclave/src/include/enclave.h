@@ -20,3 +20,4 @@ int printf(const char* fmt, ...);
 float sum_array(float *a, int n);
 void add_bias(float *output, float *biases, int batch, int n, int size);
 void backward_bias(float *bias_updates, float *delta, int batch, int n, int size);
+void scale_bias(float *output, float *scales, int batch, int n, int size);

@@ -1,14 +1,11 @@
 
 
 #include "enclave.h"
-
-
-void hello(){
+extern "C"{
+    #include "ecall_batchnorm_layer.h"
 
 }
-
-// unsigned char pass[] = "lizheng";
-// int pass_len = sizeof(pass);
+#include "types.h"
 
 
 void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
@@ -41,25 +38,29 @@ void ecall_avgpool_forward(int batch, int c, int fig_size, float* input, int inp
         crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)output, sizeof(float), output_len);
 }
 
-void ecall_forward_connected_layer(int TA, int TB, int M, int N, int K, float ALPHA, 
-                                    float *A, int lda, 
-                                    float *B, int ldb,
-                                    float BETA,
-                                    float *C, int ldc, 
+void ecall_forward_connected_layer( int TA, int TB, int batch, int outputs, int inputs, int batch_normalize, int train, 
+                                    float *rolling_mean, float *rolling_variance, float *scales, float *x, float *x_norm, 
+                                    float *input, int lda, 
+                                    float *weights, int ldb,
+                                    float *output, int ldc, 
                                     long a_size, long b_size, long c_size,
-                                    float * bias,
-                                    int bias_len,
+                                    float * biases,
                                     ACTIVATION a){
-            int batch = M;
-            int fig_size = K;
-            int out_fig_size = N;
-            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)A, sizeof(float) * K, batch);
-            gemm(0,1,M,N,K,1,A,K,B,K,1,C,N);
-            for(int i = 0; i < M; ++i){ 
-                axpy_cpu(N, 1, bias, 1, C + i * N, 1);
+            int M = batch;
+            int K = inputs;
+            int N = outputs;
+            float *mean = (float*)calloc(outputs, sizeof(float));
+            float *variance = (float*)calloc(outputs, sizeof(float));
+            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)input, sizeof(float) * inputs, batch);
+            gemm(0, 1, M, N, K, 1, input, K, weights, K, 1, output, N);
+            if (batch_normalize){
+                forward_batchnorm_layer(CONNECTED, train, outputs, batch, outputs, 1, 1,
+                            output, input, mean, rolling_mean, variance, rolling_variance,
+                            x, x_norm, scales);
             }
-            activate_array(C, c_size, a);
-            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)C, sizeof(float) * N, batch);
+            add_bias(output, biases, batch, outputs, 1);
+            activate_array(output, c_size, a);
+            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)output, sizeof(float) * N, batch);
 }
 
 void ecall_forward_maxpool_layer(int pad, int raw_h, int raw_w, int out_h, int out_w, int c, int batch, int size, int stride, 

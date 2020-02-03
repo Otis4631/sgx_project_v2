@@ -70,12 +70,23 @@ int e_forward_connected_layer(layer l, network net) {
     int lda = k;
     int ldb = k;
     int ldc = n;
-    //gemm(0,1,m,n,k,1,a,k,b,k,1,c,n);
     long a_size = lda * m;
     long b_size = ldb * n;
     long c_size = ldc * m;
+
+    if(!l.batch_normalize){
+        l.rolling_mean = NULL;
+        l.rolling_variance = NULL;
+        l.scales = NULL;
+        l.x = NULL;
+        l.x_norm = NULL;
+    }
     
-    sgx_status_t ret = ecall_forward_connected_layer(EID,0,1,m,n,k,1,a,k,b,k,1,c,n,a_size,b_size,c_size,l.biases,l.outputs,l.activation);
+    sgx_status_t ret = 
+        ecall_forward_connected_layer(EID, 0, 1, m, n, k, l.batch_normalize, net.train, 
+                                        l.rolling_mean, l.rolling_variance, l.scales, l.x,
+                                        l.x_norm, a, k, b, k, c, n, a_size, b_size, c_size,
+                                        l.biases, l.activation);
     if(ret != SGX_SUCCESS) {
         print_error_message(ret);
         return -1;
