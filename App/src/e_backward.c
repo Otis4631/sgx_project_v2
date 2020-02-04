@@ -8,16 +8,6 @@
 
 extern sgx_enclave_id_t EID;
 
-//  public void ecall_backward_connected_layer(int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len,
-//                                     [in, count=a_len]           float* output, 
-//                                     [in, count=b_len]           float* input,
-//                                     [in, out, count=a_len]      float* delta,
-//                                     [in, out, count=b_len]      float* n_delta,
-//                                     [in, out, count=outputs]    float* bias_updates,
-//                                     [in, out, count=c_len]      float* weight_updates);
-
-
-
 
 void e_backward_connected_layer(layer l, network net) {
     int a_len = l.outputs * net.batch;
@@ -27,8 +17,11 @@ void e_backward_connected_layer(layer l, network net) {
     if(!net.delta){
         ndelta_len = 0;
     }
-    sgx_status_t ret = ecall_backward_connected_layer(EID, net.batch, l.outputs, l.inputs, l.activation, a_len, b_len, c_len, ndelta_len,
-        l.output, net.input, l.delta, net.delta, l.weights, l.bias_updates, l.weight_updates);
+    sgx_status_t ret = ecall_backward_connected_layer(EID, l.batch_normalize, l.out_c, l.out_w, l.out_h ,net.batch, l.outputs, l.inputs, l.activation, a_len, b_len, c_len, ndelta_len,
+        l.output, net.input, l.delta, net.delta, l.weights, l.bias_updates, l.weight_updates,
+        l.scale_updates, l.x, l.x_norm,
+        l.mean, l.variance, l.mean_delta,
+        l.variance_delta, l.scales);
     if(ret != SGX_SUCCESS) {
         print_error_message(ret);
         return ;

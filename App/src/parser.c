@@ -364,6 +364,7 @@ void parse_net_options(list *options, network *net)
     net->batch /= subdivs;
     net->batch *= net->time_steps;
     net->subdivisions = subdivs;
+    net->threshold =  option_find_float_quiet(options, "threshold", 10);
 
     net->adam = option_find_int_quiet(options, "adam", 0);
     if(net->adam){

@@ -13,6 +13,8 @@ extern "C" {
     #include "types.h"
     #include "blas.h"
     #include "float.h"
+    #include "ecall_batchnorm_layer.h"
+
 }
 const uint8_t pass[] = "lizheng";
 const size_t pass_len = 8;

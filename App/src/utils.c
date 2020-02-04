@@ -11,6 +11,14 @@
 #include "base64.h"
 #include "sgx_err.h"
 
+
+void gradient_clip(float* arr, size_t n, float threshold) {
+    float L2_norm = mag_array(arr, n);
+    if(L2_norm > threshold) {
+        scale_array(arr, n, threshold / L2_norm);
+    }
+}
+
 void add_bias(float *output, float *biases, int batch, int n, int size)
 {
     int i,j,b;

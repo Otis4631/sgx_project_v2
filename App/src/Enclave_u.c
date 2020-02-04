@@ -65,6 +65,8 @@ typedef struct ms_ecall_forward_connected_layer_t {
 	long int ms_b_size;
 	long int ms_c_size;
 	float* ms_bias;
+	float* ms_mean;
+	float* ms_variance;
 	ACTIVATION ms_a;
 } ms_ecall_forward_connected_layer_t;
 
@@ -159,6 +161,10 @@ typedef struct ms_ecall_backward_cost_layer_t {
 } ms_ecall_backward_cost_layer_t;
 
 typedef struct ms_ecall_backward_connected_layer_t {
+	int ms_bn;
+	size_t ms_out_c;
+	size_t ms_out_w;
+	size_t ms_out_h;
 	int ms_batch;
 	int ms_outputs;
 	int ms_inputs;
@@ -174,6 +180,14 @@ typedef struct ms_ecall_backward_connected_layer_t {
 	float* ms_weights;
 	float* ms_bias_updates;
 	float* ms_weight_updates;
+	float* ms_scale_updates;
+	float* ms_x;
+	float* ms_x_norm;
+	float* ms_mean;
+	float* ms_variance;
+	float* ms_mean_delta;
+	float* ms_mean_variance;
+	float* ms_scale;
 } ms_ecall_backward_connected_layer_t;
 
 typedef struct ms_ocall_print_string_t {
@@ -258,7 +272,7 @@ sgx_status_t ecall_avgpool_forward(sgx_enclave_id_t eid, int batch, int c, int f
 	return status;
 }
 
-sgx_status_t ecall_forward_connected_layer(sgx_enclave_id_t eid, int TA, int TB, int M, int outputs, int K, int BN, int train, float* rolling_mean, float* rolling_variance, float* scales, float* x, float* x_norm, float* A, int lda, float* B, int ldb, float* C, int ldc, long int a_size, long int b_size, long int c_size, float* bias, ACTIVATION a)
+sgx_status_t ecall_forward_connected_layer(sgx_enclave_id_t eid, int TA, int TB, int M, int outputs, int K, int BN, int train, float* rolling_mean, float* rolling_variance, float* scales, float* x, float* x_norm, float* A, int lda, float* B, int ldb, float* C, int ldc, long int a_size, long int b_size, long int c_size, float* bias, float* mean, float* variance, ACTIVATION a)
 {
 	sgx_status_t status;
 	ms_ecall_forward_connected_layer_t ms;
@@ -284,6 +298,8 @@ sgx_status_t ecall_forward_connected_layer(sgx_enclave_id_t eid, int TA, int TB,
 	ms.ms_b_size = b_size;
 	ms.ms_c_size = c_size;
 	ms.ms_bias = bias;
+	ms.ms_mean = mean;
+	ms.ms_variance = variance;
 	ms.ms_a = a;
 	status = sgx_ecall(eid, 4, &ocall_table_Enclave, &ms);
 	return status;
@@ -409,10 +425,14 @@ sgx_status_t ecall_backward_cost_layer(sgx_enclave_id_t eid, size_t input_size, 
 	return status;
 }
 
-sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len, float* output, float* input, float* delta, float* n_delta, float* weights, float* bias_updates, float* weight_updates)
+sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int bn, size_t out_c, size_t out_w, size_t out_h, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len, float* output, float* input, float* delta, float* n_delta, float* weights, float* bias_updates, float* weight_updates, float* scale_updates, float* x, float* x_norm, float* mean, float* variance, float* mean_delta, float* mean_variance, float* scale)
 {
 	sgx_status_t status;
 	ms_ecall_backward_connected_layer_t ms;
+	ms.ms_bn = bn;
+	ms.ms_out_c = out_c;
+	ms.ms_out_w = out_w;
+	ms.ms_out_h = out_h;
 	ms.ms_batch = batch;
 	ms.ms_outputs = outputs;
 	ms.ms_inputs = inputs;
@@ -428,6 +448,14 @@ sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int batch, int
 	ms.ms_weights = weights;
 	ms.ms_bias_updates = bias_updates;
 	ms.ms_weight_updates = weight_updates;
+	ms.ms_scale_updates = scale_updates;
+	ms.ms_x = x;
+	ms.ms_x_norm = x_norm;
+	ms.ms_mean = mean;
+	ms.ms_variance = variance;
+	ms.ms_mean_delta = mean_delta;
+	ms.ms_mean_variance = mean_variance;
+	ms.ms_scale = scale;
 	status = sgx_ecall(eid, 11, &ocall_table_Enclave, &ms);
 	return status;
 }

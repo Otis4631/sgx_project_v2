@@ -79,7 +79,10 @@
         "utils.h": "c",
         "types.h": "c",
         "e_forward.h": "c",
-        "blas.h": "c"
+        "blas.h": "c",
+        "image.h": "c",
+        "data.h": "c",
+        "ecall_batchnorm_layer.h": "c"
     },
     "git.ignoreLimitWarning": true,
     "python.pythonPath": "/usr/bin/python"

@@ -86,7 +86,7 @@ int e_forward_connected_layer(layer l, network net) {
         ecall_forward_connected_layer(EID, 0, 1, m, n, k, l.batch_normalize, net.train, 
                                         l.rolling_mean, l.rolling_variance, l.scales, l.x,
                                         l.x_norm, a, k, b, k, c, n, a_size, b_size, c_size,
-                                        l.biases, l.activation);
+                                        l.biases, l.mean, l.variance,l.activation);
     if(ret != SGX_SUCCESS) {
         print_error_message(ret);
         return -1;

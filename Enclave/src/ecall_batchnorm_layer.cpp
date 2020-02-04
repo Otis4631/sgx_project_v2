@@ -1,17 +1,14 @@
-#include "types.h"
-#include "ecall_batchnorm_layer.h"
-#include "blas.h"
-#include "math.h"
-#include <stdio.h>
+#include "enclave.h"
+
 
 void backward_scale_cpu(float *x_norm, float *delta, int batch, int n, int size, float *scale_updates)
 {
-    int i,b,f;
+    int i,b,f, index;
     for(f = 0; f < n; ++f){
         float sum = 0;
         for(b = 0; b < batch; ++b){
             for(i = 0; i < size; ++i){
-                int index = i + size*(f + n*b);
+                index = i + size*(f + n*b);
                 sum += delta[index] * x_norm[index];
             }
         }
@@ -86,20 +83,17 @@ void forward_batchnorm_layer(LAYER_TYPE layer_type, int train, size_t outputs, s
     scale_bias(output, scales, batch, out_c, out_h*out_w);
 }
 
-// void backward_batchnorm_layer(layer l, network net)
-// {
-//     if(!net.train){
-//         mean = rolling_mean;
-//         variance = rolling_variance;
-//     }
-//     backward_bias(l.bias_updates, l.delta, batch, out_c, out_w*out_h);
-//     backward_scale_cpu(x_norm, l.delta, batch, out_c, out_w*out_h, l.scale_updates);
 
-//     scale_bias(l.delta, l.scales, batch, out_c, out_h*out_w);
+void backward_batchnorm_layer(size_t batch, size_t out_c, size_t out_w, size_t out_h,
+                              float *bias_updates, float *delta, float *scale_updates, float *x_norm, float *x,
+                              float *mean, float *variance, float *mean_delta, float* variance_delta, float* scales)
+{
 
-//     mean_delta_cpu(l.delta, variance, batch, out_c, out_w*out_h, mean_delta);
-//     variance_delta_cpu(x, l.delta, mean, variance, batch, out_c, out_w*out_h, variance_delta);
-//     normalize_delta_cpu(x, mean, variance, mean_delta, variance_delta, batch, out_c, out_w*out_h, l.delta);
-//     if(layer_type == BATCHNORM) copy_cpu(outputs*batch, l.delta, 1, net.delta, 1);
-// }
+    backward_scale_cpu(x_norm, delta, batch, out_c, out_w*out_h, scale_updates);
 
+    scale_bias(delta, scales, batch, out_c, out_h*out_w);
+
+    mean_delta_cpu(delta, variance, batch, out_c, out_w*out_h, mean_delta);
+    variance_delta_cpu(x, delta, mean, variance, batch, out_c, out_w*out_h, variance_delta);
+    normalize_delta_cpu(x, mean, variance, mean_delta, variance_delta, batch, out_c, out_w*out_h, delta);
+}

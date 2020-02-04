@@ -91,6 +91,8 @@ typedef struct ms_ecall_forward_connected_layer_t {
 	long int ms_b_size;
 	long int ms_c_size;
 	float* ms_bias;
+	float* ms_mean;
+	float* ms_variance;
 	ACTIVATION ms_a;
 } ms_ecall_forward_connected_layer_t;
 
@@ -185,6 +187,10 @@ typedef struct ms_ecall_backward_cost_layer_t {
 } ms_ecall_backward_cost_layer_t;
 
 typedef struct ms_ecall_backward_connected_layer_t {
+	int ms_bn;
+	size_t ms_out_c;
+	size_t ms_out_w;
+	size_t ms_out_h;
 	int ms_batch;
 	int ms_outputs;
 	int ms_inputs;
@@ -200,6 +206,14 @@ typedef struct ms_ecall_backward_connected_layer_t {
 	float* ms_weights;
 	float* ms_bias_updates;
 	float* ms_weight_updates;
+	float* ms_scale_updates;
+	float* ms_x;
+	float* ms_x_norm;
+	float* ms_mean;
+	float* ms_variance;
+	float* ms_mean_delta;
+	float* ms_mean_variance;
+	float* ms_scale;
 } ms_ecall_backward_connected_layer_t;
 
 typedef struct ms_ocall_print_string_t {
@@ -565,6 +579,12 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 	float* _tmp_bias = ms->ms_bias;
 	size_t _len_bias = _tmp_outputs * sizeof(float);
 	float* _in_bias = NULL;
+	float* _tmp_mean = ms->ms_mean;
+	size_t _len_mean = _tmp_outputs * sizeof(float);
+	float* _in_mean = NULL;
+	float* _tmp_variance = ms->ms_variance;
+	size_t _len_variance = _tmp_outputs * sizeof(float);
+	float* _in_variance = NULL;
 
 	if (sizeof(*_tmp_rolling_mean) != 0 &&
 		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_rolling_mean))) {
@@ -611,6 +631,16 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
+	if (sizeof(*_tmp_mean) != 0 &&
+		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_mean))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_variance) != 0 &&
+		(size_t)_tmp_outputs > (SIZE_MAX / sizeof(*_tmp_variance))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
 	CHECK_UNIQUE_POINTER(_tmp_rolling_mean, _len_rolling_mean);
 	CHECK_UNIQUE_POINTER(_tmp_rolling_variance, _len_rolling_variance);
 	CHECK_UNIQUE_POINTER(_tmp_scales, _len_scales);
@@ -620,6 +650,8 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 	CHECK_UNIQUE_POINTER(_tmp_B, _len_B);
 	CHECK_UNIQUE_POINTER(_tmp_C, _len_C);
 	CHECK_UNIQUE_POINTER(_tmp_bias, _len_bias);
+	CHECK_UNIQUE_POINTER(_tmp_mean, _len_mean);
+	CHECK_UNIQUE_POINTER(_tmp_variance, _len_variance);
 
 	//
 	// fence after pointer checks
@@ -788,8 +820,44 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 		}
 
 	}
+	if (_tmp_mean != NULL && _len_mean != 0) {
+		if ( _len_mean % sizeof(*_tmp_mean) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_mean = (float*)malloc(_len_mean);
+		if (_in_mean == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ecall_forward_connected_layer(ms->ms_TA, ms->ms_TB, ms->ms_M, _tmp_outputs, ms->ms_K, ms->ms_BN, ms->ms_train, _in_rolling_mean, _in_rolling_variance, _in_scales, _in_x, _in_x_norm, _in_A, ms->ms_lda, _in_B, ms->ms_ldb, _in_C, ms->ms_ldc, _tmp_a_size, _tmp_b_size, _tmp_c_size, _in_bias, ms->ms_a);
+		if (memcpy_s(_in_mean, _len_mean, _tmp_mean, _len_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_variance != NULL && _len_variance != 0) {
+		if ( _len_variance % sizeof(*_tmp_variance) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_variance = (float*)malloc(_len_variance);
+		if (_in_variance == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_variance, _len_variance, _tmp_variance, _len_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_forward_connected_layer(ms->ms_TA, ms->ms_TB, ms->ms_M, _tmp_outputs, ms->ms_K, ms->ms_BN, ms->ms_train, _in_rolling_mean, _in_rolling_variance, _in_scales, _in_x, _in_x_norm, _in_A, ms->ms_lda, _in_B, ms->ms_ldb, _in_C, ms->ms_ldc, _tmp_a_size, _tmp_b_size, _tmp_c_size, _in_bias, _in_mean, _in_variance, ms->ms_a);
 	if (_in_rolling_mean) {
 		if (memcpy_s(_tmp_rolling_mean, _len_rolling_mean, _in_rolling_mean, _len_rolling_mean)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -826,6 +894,18 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_connected_layer(void* pms)
 			goto err;
 		}
 	}
+	if (_in_mean) {
+		if (memcpy_s(_tmp_mean, _len_mean, _in_mean, _len_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_variance) {
+		if (memcpy_s(_tmp_variance, _len_variance, _in_variance, _len_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
 
 err:
 	if (_in_rolling_mean) free(_in_rolling_mean);
@@ -837,6 +917,8 @@ err:
 	if (_in_B) free(_in_B);
 	if (_in_C) free(_in_C);
 	if (_in_bias) free(_in_bias);
+	if (_in_mean) free(_in_mean);
+	if (_in_variance) free(_in_variance);
 	return status;
 }
 
@@ -1737,6 +1819,31 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 	float* _tmp_weight_updates = ms->ms_weight_updates;
 	size_t _len_weight_updates = _tmp_c_len * sizeof(float);
 	float* _in_weight_updates = NULL;
+	float* _tmp_scale_updates = ms->ms_scale_updates;
+	size_t _tmp_out_c = ms->ms_out_c;
+	size_t _len_scale_updates = _tmp_out_c * sizeof(float);
+	float* _in_scale_updates = NULL;
+	float* _tmp_x = ms->ms_x;
+	size_t _len_x = _tmp_a_len * sizeof(float);
+	float* _in_x = NULL;
+	float* _tmp_x_norm = ms->ms_x_norm;
+	size_t _len_x_norm = _tmp_a_len * sizeof(float);
+	float* _in_x_norm = NULL;
+	float* _tmp_mean = ms->ms_mean;
+	size_t _len_mean = _tmp_out_c * sizeof(float);
+	float* _in_mean = NULL;
+	float* _tmp_variance = ms->ms_variance;
+	size_t _len_variance = _tmp_out_c * sizeof(float);
+	float* _in_variance = NULL;
+	float* _tmp_mean_delta = ms->ms_mean_delta;
+	size_t _len_mean_delta = _tmp_out_c * sizeof(float);
+	float* _in_mean_delta = NULL;
+	float* _tmp_mean_variance = ms->ms_mean_variance;
+	size_t _len_mean_variance = _tmp_out_c * sizeof(float);
+	float* _in_mean_variance = NULL;
+	float* _tmp_scale = ms->ms_scale;
+	size_t _len_scale = _tmp_out_c * sizeof(float);
+	float* _in_scale = NULL;
 
 	if (sizeof(*_tmp_output) != 0 &&
 		(size_t)_tmp_a_len > (SIZE_MAX / sizeof(*_tmp_output))) {
@@ -1773,6 +1880,46 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
+	if (sizeof(*_tmp_scale_updates) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_scale_updates))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x) != 0 &&
+		(size_t)_tmp_a_len > (SIZE_MAX / sizeof(*_tmp_x))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x_norm) != 0 &&
+		(size_t)_tmp_a_len > (SIZE_MAX / sizeof(*_tmp_x_norm))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_mean) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_mean))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_variance) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_variance))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_mean_delta) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_mean_delta))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_mean_variance) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_mean_variance))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_scale) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_scale))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
 	CHECK_UNIQUE_POINTER(_tmp_output, _len_output);
 	CHECK_UNIQUE_POINTER(_tmp_input, _len_input);
 	CHECK_UNIQUE_POINTER(_tmp_delta, _len_delta);
@@ -1780,6 +1927,14 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 	CHECK_UNIQUE_POINTER(_tmp_weights, _len_weights);
 	CHECK_UNIQUE_POINTER(_tmp_bias_updates, _len_bias_updates);
 	CHECK_UNIQUE_POINTER(_tmp_weight_updates, _len_weight_updates);
+	CHECK_UNIQUE_POINTER(_tmp_scale_updates, _len_scale_updates);
+	CHECK_UNIQUE_POINTER(_tmp_x, _len_x);
+	CHECK_UNIQUE_POINTER(_tmp_x_norm, _len_x_norm);
+	CHECK_UNIQUE_POINTER(_tmp_mean, _len_mean);
+	CHECK_UNIQUE_POINTER(_tmp_variance, _len_variance);
+	CHECK_UNIQUE_POINTER(_tmp_mean_delta, _len_mean_delta);
+	CHECK_UNIQUE_POINTER(_tmp_mean_variance, _len_mean_variance);
+	CHECK_UNIQUE_POINTER(_tmp_scale, _len_scale);
 
 	//
 	// fence after pointer checks
@@ -1912,8 +2067,152 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 		}
 
 	}
+	if (_tmp_scale_updates != NULL && _len_scale_updates != 0) {
+		if ( _len_scale_updates % sizeof(*_tmp_scale_updates) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_scale_updates = (float*)malloc(_len_scale_updates);
+		if (_in_scale_updates == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ecall_backward_connected_layer(ms->ms_batch, _tmp_outputs, ms->ms_inputs, ms->ms_a, _tmp_a_len, _tmp_b_len, _tmp_c_len, _tmp_nd_len, _in_output, _in_input, _in_delta, _in_n_delta, _in_weights, _in_bias_updates, _in_weight_updates);
+		if (memcpy_s(_in_scale_updates, _len_scale_updates, _tmp_scale_updates, _len_scale_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x != NULL && _len_x != 0) {
+		if ( _len_x % sizeof(*_tmp_x) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x = (float*)malloc(_len_x);
+		if (_in_x == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x, _len_x, _tmp_x, _len_x)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x_norm != NULL && _len_x_norm != 0) {
+		if ( _len_x_norm % sizeof(*_tmp_x_norm) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x_norm = (float*)malloc(_len_x_norm);
+		if (_in_x_norm == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x_norm, _len_x_norm, _tmp_x_norm, _len_x_norm)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_mean != NULL && _len_mean != 0) {
+		if ( _len_mean % sizeof(*_tmp_mean) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_mean = (float*)malloc(_len_mean);
+		if (_in_mean == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_mean, _len_mean, _tmp_mean, _len_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_variance != NULL && _len_variance != 0) {
+		if ( _len_variance % sizeof(*_tmp_variance) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_variance = (float*)malloc(_len_variance);
+		if (_in_variance == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_variance, _len_variance, _tmp_variance, _len_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_mean_delta != NULL && _len_mean_delta != 0) {
+		if ( _len_mean_delta % sizeof(*_tmp_mean_delta) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_mean_delta = (float*)malloc(_len_mean_delta);
+		if (_in_mean_delta == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_mean_delta, _len_mean_delta, _tmp_mean_delta, _len_mean_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_mean_variance != NULL && _len_mean_variance != 0) {
+		if ( _len_mean_variance % sizeof(*_tmp_mean_variance) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_mean_variance = (float*)malloc(_len_mean_variance);
+		if (_in_mean_variance == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_mean_variance, _len_mean_variance, _tmp_mean_variance, _len_mean_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_scale != NULL && _len_scale != 0) {
+		if ( _len_scale % sizeof(*_tmp_scale) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_scale = (float*)malloc(_len_scale);
+		if (_in_scale == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_scale, _len_scale, _tmp_scale, _len_scale)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_backward_connected_layer(ms->ms_bn, _tmp_out_c, ms->ms_out_w, ms->ms_out_h, ms->ms_batch, _tmp_outputs, ms->ms_inputs, ms->ms_a, _tmp_a_len, _tmp_b_len, _tmp_c_len, _tmp_nd_len, _in_output, _in_input, _in_delta, _in_n_delta, _in_weights, _in_bias_updates, _in_weight_updates, _in_scale_updates, _in_x, _in_x_norm, _in_mean, _in_variance, _in_mean_delta, _in_mean_variance, _in_scale);
 	if (_in_delta) {
 		if (memcpy_s(_tmp_delta, _len_delta, _in_delta, _len_delta)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -1944,6 +2243,42 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 			goto err;
 		}
 	}
+	if (_in_scale_updates) {
+		if (memcpy_s(_tmp_scale_updates, _len_scale_updates, _in_scale_updates, _len_scale_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_x) {
+		if (memcpy_s(_tmp_x, _len_x, _in_x, _len_x)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_x_norm) {
+		if (memcpy_s(_tmp_x_norm, _len_x_norm, _in_x_norm, _len_x_norm)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_mean_delta) {
+		if (memcpy_s(_tmp_mean_delta, _len_mean_delta, _in_mean_delta, _len_mean_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_mean_variance) {
+		if (memcpy_s(_tmp_mean_variance, _len_mean_variance, _in_mean_variance, _len_mean_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_scale) {
+		if (memcpy_s(_tmp_scale, _len_scale, _in_scale, _len_scale)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
 
 err:
 	if (_in_output) free(_in_output);
@@ -1953,6 +2288,14 @@ err:
 	if (_in_weights) free(_in_weights);
 	if (_in_bias_updates) free(_in_bias_updates);
 	if (_in_weight_updates) free(_in_weight_updates);
+	if (_in_scale_updates) free(_in_scale_updates);
+	if (_in_x) free(_in_x);
+	if (_in_x_norm) free(_in_x_norm);
+	if (_in_mean) free(_in_mean);
+	if (_in_variance) free(_in_variance);
+	if (_in_mean_delta) free(_in_mean_delta);
+	if (_in_mean_variance) free(_in_mean_variance);
+	if (_in_scale) free(_in_scale);
 	return status;
 }
 

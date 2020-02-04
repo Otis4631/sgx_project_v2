@@ -16,14 +16,22 @@ enclave{
         public void ecall_backward_cost_layer(size_t input_size, int scale, 
                                     [in, count=input_size]      float* delta,
                                     [in, out, count=input_size] float* n_delta);
-        public void ecall_backward_connected_layer(int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len,
+        public void ecall_backward_connected_layer(int bn, size_t out_c, size_t out_w, size_t out_h, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len,
                                     [in, count=a_len]           float* output, 
                                     [in, count=b_len]           float* input,
                                     [in, out, count=a_len]      float* delta,
                                     [in, out, count=nd_len]     float* n_delta,
                                     [in, out, count=c_len]      float* weights,
                                     [in, out, count=outputs]    float* bias_updates,
-                                    [in, out, count=c_len]      float* weight_updates);
+                                    [in, out, count=c_len]      float* weight_updates,
+                                    [in, out, count=out_c]      float* scale_updates,
+                                    [in, out, count=a_len]      float* x,
+                                    [in, out, count=a_len]      float* x_norm,
+                                    [in, count=out_c]           float* mean,
+                                    [in, count=out_c]           float* variance,
+                                    [in, out, count=out_c]      float* mean_delta,
+                                    [in, out, count=out_c]      float* mean_variance,
+                                    [in, out, count=out_c]      float* scale);
 
     };
     untrusted{};

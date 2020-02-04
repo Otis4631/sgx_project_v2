@@ -1,6 +1,8 @@
 enclave {
     include "types.h"
     from "backward.edl" import *;
+    from "types.edl" import *;
+
     trusted{
                              
         public void ecall_normalize_array([in, out, count =arr_len]float * array, size_t arr_len, size_t batch);
@@ -26,6 +28,8 @@ enclave {
                                                     [in, out, count=c_size]    float *C, int ldc, 
                                                     long a_size, long b_size, long c_size,
                                                     [in, count=outputs]         float* bias,
+                                                    [in, out, count=outputs]    float* mean,
+                                                    [in, out, count=outputs]    float* variance,
                                                     ACTIVATION a);
 
                 

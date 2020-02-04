@@ -275,7 +275,9 @@ void backward_network(network* netp)
         net.index = i;
         // 反向计算第i层的敏感度图、权重及偏置更新值，并更新权重、偏置（同时会计算上一层的敏感度图，
         // 存储在net->delta中，但是还差一个环节：乘上上一层输出对加权输入的导数，也即上一层激活函数对加权输入的导数）
+        gradient_clip(l.delta, l.outputs * l.batch, net.threshold);
         l.backward(l, net);
+
     }
 }
 

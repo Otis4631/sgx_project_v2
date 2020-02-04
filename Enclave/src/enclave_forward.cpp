@@ -45,12 +45,13 @@ void ecall_forward_connected_layer( int TA, int TB, int batch, int outputs, int 
                                     float *output, int ldc, 
                                     long a_size, long b_size, long c_size,
                                     float * biases,
+                                    float *mean,
+                                    float *variance,
                                     ACTIVATION a){
             int M = batch;
             int K = inputs;
             int N = outputs;
-            float *mean = (float*)calloc(outputs, sizeof(float));
-            float *variance = (float*)calloc(outputs, sizeof(float));
+
             crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)input, sizeof(float) * inputs, batch);
             gemm(0, 1, M, N, K, 1, input, K, weights, K, 1, output, N);
             if (batch_normalize){

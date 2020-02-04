@@ -1,6 +1,5 @@
 #include "enclave.h"
 
-
 // struct connect_backward_struct {
 //     int batch, int outputs, int inputs, ACTIVATION a, 
 //     [in, count=outputs * batch] float* output, size_t out_len,
@@ -8,14 +7,19 @@
 //     [in, out, count=] float* bias
 // };
 
-void ecall_backward_connected_layer(int batch, int outputs, int inputs, ACTIVATION activation, size_t a_len, size_t b_len, size_t c_len, size_t n_delta_len,
+void ecall_backward_connected_layer(int bn, size_t out_c, size_t out_w, size_t out_h, 
+                                    int batch, int outputs, int inputs, ACTIVATION activation, size_t a_len, size_t b_len, size_t c_len, size_t n_delta_len,
                                     float* output, 
                                     float* input,
                                     float* delta,
                                     float* n_delta,
                                     float* weights,
                                     float* bias_updates,
-                                    float* weight_updates)
+                                    float* weight_updates,
+                                    
+                                    float* scale_updates, float* x, float *x_norm,
+                                    float* mean, float* variance, float* mean_delta,
+                                    float* variance_delta, float* scales)
 {
     //a_len: outputs*batch
     //b_len: batch*inputs
@@ -26,23 +30,12 @@ void ecall_backward_connected_layer(int batch, int outputs, int inputs, ACTIVATI
     int i;
 
     gradient_array(output, a_len, activation, delta);
-
-    for(i = 0; i < batch; ++i){
-       // y= alpha*x + y
-       // void axpy_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY);
-
-        axpy_cpu(outputs, 1, delta + i*outputs, 1, bias_updates, 1);
-    }
-    // if(l.batch_normalize){
-    //     backward_scale_cpu(l.x_norm, l.delta, l.batch, l.outputs, 1, l.scale_updates);
-
-    //     scale_bias(l.delta, l.scales, l.batch, l.outputs, 1);
-
-    //     mean_delta_cpu(l.delta, l.variance, l.batch, l.outputs, 1, l.mean_delta);
-    //     variance_delta_cpu(l.x, l.delta, l.mean, l.variance, l.batch, l.outputs, 1, l.variance_delta);
-    //     normalize_delta_cpu(l.x, l.mean, l.variance, l.mean_delta, l.variance_delta, l.batch, l.outputs, 1, l.delta);
-    // }
-
+    backward_bias(bias_updates, delta, batch, out_c, out_w*out_h);
+    if(bn){
+        backward_batchnorm_layer(batch, out_c, out_w, out_h,
+                              bias_updates, delta, scale_updates, x_norm, x,
+                              mean, variance, mean_delta, variance_delta, scales);   
+        }
     // 计算当前全连接层的权重更新值
     int m = outputs;
     int k = batch;
