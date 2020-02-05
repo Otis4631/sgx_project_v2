@@ -38,6 +38,8 @@ char *get_cost_string(COST_TYPE a)
             return "smooth";
         case L1:
             return "L1";
+        case CE:
+            return "ce";
     }
     return "sse";
 }
@@ -53,8 +55,8 @@ cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, float sca
     l.inputs = inputs;
     l.outputs = inputs;
     l.cost_type = cost_type;
-    l.delta = calloc(inputs*batch, sizeof(float));
-    l.output = calloc(inputs*batch, sizeof(float));
+    l.delta = calloc(inputs * batch, sizeof(float));
+    l.output = calloc(inputs * batch, sizeof(float));
     l.cost = calloc(1, sizeof(float));
     l.sgx = sgx;
     l.forward = forward_cost_layer;
@@ -87,6 +89,28 @@ void resize_cost_layer(cost_layer *l, int inputs)
 #endif
 }
 
+float singe_to_oh(int classes, int label, float* oh){
+    for(int i = 0; i < classes; i++) {
+        if(i == label)
+            oh[i] = 1;
+        else
+            oh[i] = 0;
+    }
+}
+
+void ce_forward(int batch, int classes, float *pred, float *truth, float *delta, float *error)
+{
+
+    softmax_cpu(pred, classes, batch, classes, 1, 0, 1, 1, delta); //delta 中暂存softmax的值
+    size_t index = 0;
+    for(int i = 0; i < batch; i++) {
+        index = i * classes + (int)truth[i];
+        float a = delta[index];
+        error[i] = -log(a);
+        delta[index] -= 1;
+    }
+}
+
 void forward_cost_layer(cost_layer l, network net)
 {
     if (!net.truth) return;
@@ -98,8 +122,10 @@ void forward_cost_layer(cost_layer l, network net)
     }
     if(l.cost_type == SMOOTH){
         smooth_l1_cpu(l.batch*l.inputs, net.input, net.truth, l.delta, l.output);
-    }else if(l.cost_type == L1){
+    } else if(l.cost_type == L1){
         l1_cpu(l.batch*l.inputs, net.input, net.truth, l.delta, l.output);
+    } else if(l.cost_type == CE){
+        ce_forward(l.batch, l.inputs, net.input, net.truth, l.delta, l.output);
     } else {
         l2_cpu(l.batch*l.inputs, net.input, net.truth, l.delta, l.output);
     }

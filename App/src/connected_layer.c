@@ -101,16 +101,16 @@ connected_layer make_connected_layer(int batch, int inputs, int outputs, ACTIVAT
 
 void update_connected_layer(connected_layer l, int batch, float learning_rate, float momentum, float decay)
 {
-    axpy_cpu(l.outputs, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.outputs, -learning_rate/batch, l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.outputs, momentum, l.bias_updates, 1);
 
     if(l.batch_normalize){
-        axpy_cpu(l.outputs, learning_rate/batch, l.scale_updates, 1, l.scales, 1);
+        axpy_cpu(l.outputs, -learning_rate/batch, l.scale_updates, 1, l.scales, 1);
         scal_cpu(l.outputs, momentum, l.scale_updates, 1);
     }
 
    // axpy_cpu(l.inputs*l.outputs, -decay*batch, l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(l.inputs*l.outputs, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(l.inputs*l.outputs, -learning_rate/batch, l.weight_updates, 1, l.weights, 1);
     scal_cpu(l.inputs*l.outputs, momentum, l.weight_updates, 1);
 }
 
