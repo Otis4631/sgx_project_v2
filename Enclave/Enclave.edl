@@ -4,7 +4,11 @@ enclave {
     from "types.edl" import *;
 
     trusted{
-                             
+        public void ecall_forward_dropout_layer(int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, 
+                                    [in, out, count=in_len]     float* rand,
+                                    [in, out, count=in_len]     float* input);
+
+
         public void ecall_normalize_array([in, out, count =arr_len]float * array, size_t arr_len, size_t batch);
 
         public void ecall_gemm( int TA, int TB, int M, int N, int K, float ALPHA, 

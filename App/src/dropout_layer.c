@@ -1,4 +1,6 @@
 #include "dropout_layer.h"
+#include "e_backward.h"
+#include "e_forward.h"
 #include "utils.h"
 #include "cuda.h"
 #include <stdlib.h>
@@ -13,7 +15,7 @@
 ** 碎碎念： 相比很多网络层的构建，dropout层的构建函数需要的输入参数比较少，网络输入数据尺寸h,w,c也不需要；
 **         注意dropout层有l.inputs = l.outputs；另外此处实现的是inverted dropout，不是标准的dropout
 */
-dropout_layer make_dropout_layer(int batch, int inputs, float probability)
+dropout_layer make_dropout_layer(int batch, int inputs, float probability, int sgx)
 {
     dropout_layer l = {0};
     l.type = DROPOUT;
@@ -26,6 +28,10 @@ dropout_layer make_dropout_layer(int batch, int inputs, float probability)
     
     l.forward = forward_dropout_layer;
     l.backward = backward_dropout_layer;
+    if(sgx) {
+        l.forward = e_forward_dropout_layer;
+        l.backward = e_backward_dropout_layer;
+    }
     
     #ifdef GPU
     l.forward_gpu = forward_dropout_layer_gpu;
@@ -77,7 +83,6 @@ void forward_dropout_layer(dropout_layer l, network net)
 
         // 每个输入元素都对应一个随机数，保存在l.rand中
         l.rand[i] = r;
-
         // 如果r小于l.probability（l.probability是舍弃概率），则舍弃该输入元素，注意，舍弃并不是删除，
         // 而是将其值置为0,所以输入元素个数总数没变（因故输出元素个数l.outputs等于l.inputs）
         if(r < l.probability) net.input[i] = 0;
@@ -117,5 +122,5 @@ void backward_dropout_layer(dropout_layer l, network net)
     }
 }
 
-
+ 
 // 显然，dropout层没有训练参数，故而，也没有update_dropout_layer()函数

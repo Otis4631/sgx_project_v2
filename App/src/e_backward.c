@@ -8,6 +8,15 @@
 
 extern sgx_enclave_id_t EID;
 
+void e_backward_dropout_layer(layer l, network net) {
+    if(!net.delta) return ;
+    sgx_status_t ret = ecall_backward_dropout_layer(EID, net.train, l.batch, l.inputs, l.probability, l.scale, l.batch * l.inputs,
+                                    l.rand, net.input, net.delta);
+    if(ret != SGX_SUCCESS) {
+        print_error_message(ret);
+        return ;
+    }
+}
 
 void e_backward_connected_layer(layer l, network net) {
     int a_len = l.outputs * net.batch;

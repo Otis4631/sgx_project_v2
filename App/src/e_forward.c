@@ -8,6 +8,17 @@
 typedef layer cost_layer;
 
 extern sgx_enclave_id_t EID;
+
+int e_forward_dropout_layer(layer l, network net) {
+    if(!net.train) return 0;
+    sgx_status_t ret = ecall_forward_dropout_layer(EID, net.train, l.batch, l.inputs, l.probability, l.scale, l.batch * l.inputs,
+                                    l.rand, net.input);
+    if(ret != SGX_SUCCESS) {
+        print_error_message(ret);
+        return -1;
+    }
+}
+
 int e_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
         float *A, int lda, 
         float *B, int ldb,

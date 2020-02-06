@@ -10,6 +10,31 @@ int printf(const char* fmt, ...)
     ocall_print_string(buf);
     return (int)strnlen(buf, BUFSIZ - 1) + 1;
 }
+float rand_uniform(float min, float max)
+{
+    if(max < min){
+        float swap = min;
+        min = max;
+        max = swap;
+    }
+    int tmp;
+    sgx_read_rand((uint8_t *)&tmp, 4);
+    tmp = abs(tmp);
+    return  (tmp * 1.0 / RAND_MAX) * (max - min) + min;
+}
+
+void ce_forward(int batch, int classes, float *pred, float *truth, float *delta, float *error)
+{
+
+    softmax_cpu(pred, classes, batch, classes, 1, 0, 1, 1, delta); //delta 中暂存softmax的值
+    size_t index = 0;
+    for(int i = 0; i < batch; i++) {
+        index = i * classes + (int)truth[i];
+        float a = delta[index];
+        error[i] = -log(a);
+        delta[index] -= 1;
+    }
+}
 
 void scale_bias(float *output, float *scales, int batch, int n, int size)
 {
@@ -22,7 +47,6 @@ void scale_bias(float *output, float *scales, int batch, int n, int size)
         }
     }
 }
-
 void ecall_activate_array(float *x, int n, ACTIVATION a) {
     crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)x, 4, n);
     activate_array(x, n, a);

@@ -1,11 +1,20 @@
 #include "enclave.h"
 
-// struct connect_backward_struct {
-//     int batch, int outputs, int inputs, ACTIVATION a, 
-//     [in, count=outputs * batch] float* output, size_t out_len,
-//     [in, out, count=outputs * batch]  float* delta,
-//     [in, out, count=] float* bias
-// };
+void ecall_backward_dropout_layer( int train, size_t batch, size_t inputs, float probability, float scale, size_t,
+                                    float* rand, float* input, float* ndelta)
+{
+    int i;
+    crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)input, sizeof(float) * inputs, batch);
+
+
+     if(!ndelta) return;
+    for(i = 0; i < batch * inputs; ++i){
+        float r = rand[i];
+        if(r < probability) ndelta[i] = 0;
+        else ndelta[i] *= scale;
+    }
+    
+}
 
 void ecall_backward_connected_layer(int bn, size_t out_c, size_t out_w, size_t out_h, 
                                     int batch, int outputs, int inputs, ACTIVATION activation, size_t a_len, size_t b_len, size_t c_len, size_t n_delta_len,

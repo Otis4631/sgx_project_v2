@@ -1,5 +1,9 @@
 enclave{
     trusted{
+        public void ecall_backward_dropout_layer(int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, 
+                                    [in, out, count=in_len]     float* rand,
+                                    [in, count=in_len]          float* input,
+                                    [in, out, count=in_len]     float* ndelta);
 
         public void ecall_backward_convolutional_layer(size_t batch ,size_t m, size_t size, size_t ic, size_t out_h, size_t out_w, size_t h, size_t w,
                                     size_t stride, size_t pad, size_t bias_len, 
@@ -12,10 +16,11 @@ enclave{
                                     [in, out, count=bias_len]   float* bias_updates,
                                     [in, out, count=weight_len] float* weight_updates);
 
-
         public void ecall_backward_cost_layer(size_t input_size, int scale, 
                                     [in, count=input_size]      float* delta,
                                     [in, out, count=input_size] float* n_delta);
+
+
         public void ecall_backward_connected_layer(int bn, size_t out_c, size_t out_w, size_t out_h, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len,
                                     [in, count=a_len]           float* output, 
                                     [in, count=b_len]           float* input,

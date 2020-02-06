@@ -1,10 +1,10 @@
 
 
 #include "enclave.h"
-extern "C"{
+extern "C" {
     #include "ecall_batchnorm_layer.h"
-
 }
+
 #include "types.h"
 
 
@@ -129,7 +129,6 @@ void ecall_forward_maxpool_layer(int pad, int raw_h, int raw_w, int out_h, int o
     crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)output, sizeof(float) * out_h * out_w * c, batch);
 }
 
-
 void ecall_forward_convolutional_layer(int batch,int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, 
                                        float * weights, int weight_len,
                                        float * input, int in_len,
@@ -171,15 +170,42 @@ void ecall_forward_cost_layer(COST_TYPE cost_type, int batch, int in_len,
                               float* output,
                               float* cost){
     crypt_aux((uint8_t *)pass, pass_len, (uint8_t*)input, sizeof(float) * in_len, batch);
-    crypt_aux((uint8_t *)pass, pass_len, (uint8_t*)truth, sizeof(float) * in_len, batch);
+    crypt_aux((uint8_t *)pass, pass_len, (uint8_t*)truth, sizeof(float) * 1, batch);
 
     if(cost_type == SMOOTH){
         smooth_l1_cpu(input_size, input, truth, delta, output);
     }else if(cost_type == L1){
         l1_cpu(input_size, input, truth, delta, output);
-    } else {
+    } else if(cost_type == CE){
+        ce_forward(batch, in_len, input, truth, delta, output);
+    }else {
         l2_cpu(input_size, input, truth, delta, output);
     }
     cost[0] = sum_array(output, input_size);
 }
 
+void ecall_forward_dropout_layer(int train, size_t batch, size_t inputs, float probability, float scale, size_t,
+                                    float* rand, float* input)
+{
+    crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)input, sizeof(float) * inputs, batch);
+    int i;
+    // 如果当前网络不是处于训练阶段而处于测试阶段，则直接返回（使用inverted dropout带来的方便）
+    if (!train) return;
+
+    // 遍历dropout层的每一个输入元素（包含整个batch的），按照指定的概率l.probability置为0或者按l.scale缩放
+    for(i = 0; i < batch * inputs; ++i){
+        // 产生一个0~1之间均匀分布的随机数
+        float r = rand_uniform(0, 1);
+
+        // 每个输入元素都对应一个随机数，保存在l.rand中
+        rand[i] = r;
+
+        // 如果r小于l.probability（l.probability是舍弃概率），则舍弃该输入元素，注意，舍弃并不是删除，
+        // 而是将其值置为0,所以输入元素个数总数没变（因故输出元素个数l.outputs等于l.inputs）
+        if(r < probability) input[i] = 0;
+        // 否则保留该输入元素，并乘以比例因子
+        else input[i] *= scale;
+    }
+    crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)input, sizeof(float) * inputs, batch);
+
+}

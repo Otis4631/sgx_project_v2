@@ -5,4 +5,5 @@
 
 void e_backward_connected_layer(layer l, network net);
 void e_backward_cost_layer(layer l, network net);
+void e_backward_dropout_layer(layer l, network net);
 #endif

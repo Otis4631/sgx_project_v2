@@ -9,7 +9,8 @@ int e_gemm(int TA, int TB, int M, int N, int K, float ALPHA,
         float *B, int ldb,
         float BETA,
         float *C, int ldc);
-
+        
+int e_forward_dropout_layer(layer l, network net);
 int e_forward_connected_layer(layer l, network net);
 int e_forward_maxpool_layer(layer l, network net);
 int e_forward_convolutional_layer(layer l, network net);

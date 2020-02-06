@@ -1,6 +1,17 @@
 #include "Enclave_u.h"
 #include <errno.h>
 
+typedef struct ms_ecall_forward_dropout_layer_t {
+	int ms_train;
+	size_t ms_batch;
+	size_t ms_inputs;
+	float ms_probability;
+	float ms_scale;
+	size_t ms_in_len;
+	float* ms_rand;
+	float* ms_input;
+} ms_ecall_forward_dropout_layer_t;
+
 typedef struct ms_ecall_normalize_array_t {
 	float* ms_array;
 	size_t ms_arr_len;
@@ -128,6 +139,18 @@ typedef struct ms_ecall_forward_cost_layer_t {
 	float* ms_cost;
 } ms_ecall_forward_cost_layer_t;
 
+typedef struct ms_ecall_backward_dropout_layer_t {
+	int ms_train;
+	size_t ms_batch;
+	size_t ms_inputs;
+	float ms_probability;
+	float ms_scale;
+	size_t ms_in_len;
+	float* ms_rand;
+	float* ms_input;
+	float* ms_ndelta;
+} ms_ecall_backward_dropout_layer_t;
+
 typedef struct ms_ecall_backward_convolutional_layer_t {
 	size_t ms_batch;
 	size_t ms_m;
@@ -211,6 +234,22 @@ static const struct {
 		(void*)Enclave_ocall_print_string,
 	}
 };
+sgx_status_t ecall_forward_dropout_layer(sgx_enclave_id_t eid, int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, float* rand, float* input)
+{
+	sgx_status_t status;
+	ms_ecall_forward_dropout_layer_t ms;
+	ms.ms_train = train;
+	ms.ms_batch = batch;
+	ms.ms_inputs = inputs;
+	ms.ms_probability = probability;
+	ms.ms_scale = scale;
+	ms.ms_in_len = in_len;
+	ms.ms_rand = rand;
+	ms.ms_input = input;
+	status = sgx_ecall(eid, 0, &ocall_table_Enclave, &ms);
+	return status;
+}
+
 sgx_status_t ecall_normalize_array(sgx_enclave_id_t eid, float* array, size_t arr_len, size_t batch)
 {
 	sgx_status_t status;
@@ -218,7 +257,7 @@ sgx_status_t ecall_normalize_array(sgx_enclave_id_t eid, float* array, size_t ar
 	ms.ms_array = array;
 	ms.ms_arr_len = arr_len;
 	ms.ms_batch = batch;
-	status = sgx_ecall(eid, 0, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 1, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -242,7 +281,7 @@ sgx_status_t ecall_gemm(sgx_enclave_id_t eid, int TA, int TB, int M, int N, int 
 	ms.ms_a_size = a_size;
 	ms.ms_b_size = b_size;
 	ms.ms_c_size = c_size;
-	status = sgx_ecall(eid, 1, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 2, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -253,7 +292,7 @@ sgx_status_t ecall_activate_array(sgx_enclave_id_t eid, float* x, int n, ACTIVAT
 	ms.ms_x = x;
 	ms.ms_n = n;
 	ms.ms_a = a;
-	status = sgx_ecall(eid, 2, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 3, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -268,7 +307,7 @@ sgx_status_t ecall_avgpool_forward(sgx_enclave_id_t eid, int batch, int c, int f
 	ms.ms_input_len = input_len;
 	ms.ms_output = output;
 	ms.ms_output_len = output_len;
-	status = sgx_ecall(eid, 3, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 4, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -301,7 +340,7 @@ sgx_status_t ecall_forward_connected_layer(sgx_enclave_id_t eid, int TA, int TB,
 	ms.ms_mean = mean;
 	ms.ms_variance = variance;
 	ms.ms_a = a;
-	status = sgx_ecall(eid, 4, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -323,7 +362,7 @@ sgx_status_t ecall_forward_maxpool_layer(sgx_enclave_id_t eid, int pad, int h, i
 	ms.ms_output = output;
 	ms.ms_out_len = out_len;
 	ms.ms_indcies = indcies;
-	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 6, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -350,7 +389,7 @@ sgx_status_t ecall_forward_convolutional_layer(sgx_enclave_id_t eid, int batch, 
 	ms.ms_biases = biases;
 	ms.ms_bias_len = bias_len;
 	ms.ms_activation = activation;
-	status = sgx_ecall(eid, 6, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 7, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -362,7 +401,7 @@ sgx_status_t ecall_rc4_crypt(sgx_enclave_id_t eid, unsigned char* key, unsigned 
 	ms.ms_key_len = key_len;
 	ms.ms_Data = Data;
 	ms.ms_Len = Len;
-	status = sgx_ecall(eid, 7, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 8, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -379,7 +418,24 @@ sgx_status_t ecall_forward_cost_layer(sgx_enclave_id_t eid, COST_TYPE cost_type,
 	ms.ms_delta = delta;
 	ms.ms_output = output;
 	ms.ms_cost = cost;
-	status = sgx_ecall(eid, 8, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 9, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t ecall_backward_dropout_layer(sgx_enclave_id_t eid, int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, float* rand, float* input, float* ndelta)
+{
+	sgx_status_t status;
+	ms_ecall_backward_dropout_layer_t ms;
+	ms.ms_train = train;
+	ms.ms_batch = batch;
+	ms.ms_inputs = inputs;
+	ms.ms_probability = probability;
+	ms.ms_scale = scale;
+	ms.ms_in_len = in_len;
+	ms.ms_rand = rand;
+	ms.ms_input = input;
+	ms.ms_ndelta = ndelta;
+	status = sgx_ecall(eid, 10, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -409,7 +465,7 @@ sgx_status_t ecall_backward_convolutional_layer(sgx_enclave_id_t eid, size_t bat
 	ms.ms_weight = weight;
 	ms.ms_bias_updates = bias_updates;
 	ms.ms_weight_updates = weight_updates;
-	status = sgx_ecall(eid, 9, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 11, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -421,7 +477,7 @@ sgx_status_t ecall_backward_cost_layer(sgx_enclave_id_t eid, size_t input_size, 
 	ms.ms_scale = scale;
 	ms.ms_delta = delta;
 	ms.ms_n_delta = n_delta;
-	status = sgx_ecall(eid, 10, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 12, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -456,7 +512,7 @@ sgx_status_t ecall_backward_connected_layer(sgx_enclave_id_t eid, int bn, size_t
 	ms.ms_mean_delta = mean_delta;
 	ms.ms_mean_variance = mean_variance;
 	ms.ms_scale = scale;
-	status = sgx_ecall(eid, 11, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 13, &ocall_table_Enclave, &ms);
 	return status;
 }
 
