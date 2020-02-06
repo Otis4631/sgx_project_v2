@@ -143,6 +143,16 @@ typedef struct ms_ecall_forward_convolutional_layer_t {
 	int ms_out_len;
 	float* ms_biases;
 	int ms_bias_len;
+	int ms_batch_normalize;
+	int ms_train;
+	int ms_outputs;
+	float* ms_rolling_mean;
+	float* ms_rolling_variance;
+	float* ms_scales;
+	float* ms_x;
+	float* ms_x_norm;
+	float* ms_mean;
+	float* ms_variance;
 	ACTIVATION ms_activation;
 } ms_ecall_forward_convolutional_layer_t;
 
@@ -179,7 +189,7 @@ typedef struct ms_ecall_backward_dropout_layer_t {
 
 typedef struct ms_ecall_backward_convolutional_layer_t {
 	size_t ms_batch;
-	size_t ms_m;
+	size_t ms_out_c;
 	size_t ms_size;
 	size_t ms_ic;
 	size_t ms_out_h;
@@ -200,6 +210,15 @@ typedef struct ms_ecall_backward_convolutional_layer_t {
 	float* ms_weight;
 	float* ms_bias_updates;
 	float* ms_weight_updates;
+	int ms_bn;
+	float* ms_scale_updates;
+	float* ms_x;
+	float* ms_x_norm;
+	float* ms_mean;
+	float* ms_variance;
+	float* ms_mean_delta;
+	float* ms_variance_delta;
+	float* ms_scales;
 } ms_ecall_backward_convolutional_layer_t;
 
 typedef struct ms_ecall_backward_cost_layer_t {
@@ -1183,6 +1202,28 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_convolutional_layer(void* pms)
 	int _tmp_bias_len = ms->ms_bias_len;
 	size_t _len_biases = _tmp_bias_len * sizeof(float);
 	float* _in_biases = NULL;
+	float* _tmp_rolling_mean = ms->ms_rolling_mean;
+	int _tmp_n_filters = ms->ms_n_filters;
+	size_t _len_rolling_mean = _tmp_n_filters * sizeof(float);
+	float* _in_rolling_mean = NULL;
+	float* _tmp_rolling_variance = ms->ms_rolling_variance;
+	size_t _len_rolling_variance = _tmp_n_filters * sizeof(float);
+	float* _in_rolling_variance = NULL;
+	float* _tmp_scales = ms->ms_scales;
+	size_t _len_scales = _tmp_n_filters * sizeof(float);
+	float* _in_scales = NULL;
+	float* _tmp_x = ms->ms_x;
+	size_t _len_x = _tmp_out_len * sizeof(float);
+	float* _in_x = NULL;
+	float* _tmp_x_norm = ms->ms_x_norm;
+	size_t _len_x_norm = _tmp_out_len * sizeof(float);
+	float* _in_x_norm = NULL;
+	float* _tmp_mean = ms->ms_mean;
+	size_t _len_mean = _tmp_n_filters * sizeof(float);
+	float* _in_mean = NULL;
+	float* _tmp_variance = ms->ms_variance;
+	size_t _len_variance = _tmp_n_filters * sizeof(float);
+	float* _in_variance = NULL;
 
 	if (sizeof(*_tmp_weights) != 0 &&
 		(size_t)_tmp_weight_len > (SIZE_MAX / sizeof(*_tmp_weights))) {
@@ -1204,10 +1245,52 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_convolutional_layer(void* pms)
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
+	if (sizeof(*_tmp_rolling_mean) != 0 &&
+		(size_t)_tmp_n_filters > (SIZE_MAX / sizeof(*_tmp_rolling_mean))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_rolling_variance) != 0 &&
+		(size_t)_tmp_n_filters > (SIZE_MAX / sizeof(*_tmp_rolling_variance))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_scales) != 0 &&
+		(size_t)_tmp_n_filters > (SIZE_MAX / sizeof(*_tmp_scales))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x) != 0 &&
+		(size_t)_tmp_out_len > (SIZE_MAX / sizeof(*_tmp_x))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x_norm) != 0 &&
+		(size_t)_tmp_out_len > (SIZE_MAX / sizeof(*_tmp_x_norm))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_mean) != 0 &&
+		(size_t)_tmp_n_filters > (SIZE_MAX / sizeof(*_tmp_mean))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_variance) != 0 &&
+		(size_t)_tmp_n_filters > (SIZE_MAX / sizeof(*_tmp_variance))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
 	CHECK_UNIQUE_POINTER(_tmp_weights, _len_weights);
 	CHECK_UNIQUE_POINTER(_tmp_input, _len_input);
 	CHECK_UNIQUE_POINTER(_tmp_output, _len_output);
 	CHECK_UNIQUE_POINTER(_tmp_biases, _len_biases);
+	CHECK_UNIQUE_POINTER(_tmp_rolling_mean, _len_rolling_mean);
+	CHECK_UNIQUE_POINTER(_tmp_rolling_variance, _len_rolling_variance);
+	CHECK_UNIQUE_POINTER(_tmp_scales, _len_scales);
+	CHECK_UNIQUE_POINTER(_tmp_x, _len_x);
+	CHECK_UNIQUE_POINTER(_tmp_x_norm, _len_x_norm);
+	CHECK_UNIQUE_POINTER(_tmp_mean, _len_mean);
+	CHECK_UNIQUE_POINTER(_tmp_variance, _len_variance);
 
 	//
 	// fence after pointer checks
@@ -1286,10 +1369,178 @@ static sgx_status_t SGX_CDECL sgx_ecall_forward_convolutional_layer(void* pms)
 		}
 
 	}
+	if (_tmp_rolling_mean != NULL && _len_rolling_mean != 0) {
+		if ( _len_rolling_mean % sizeof(*_tmp_rolling_mean) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_rolling_mean = (float*)malloc(_len_rolling_mean);
+		if (_in_rolling_mean == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ecall_forward_convolutional_layer(ms->ms_batch, ms->ms_ic, ms->ms_h, ms->ms_w, ms->ms_size, ms->ms_stride, ms->ms_pad, ms->ms_n_filters, ms->ms_out_h, ms->ms_out_w, _in_weights, _tmp_weight_len, _in_input, _tmp_in_len, _in_output, _tmp_out_len, _in_biases, _tmp_bias_len, ms->ms_activation);
+		if (memcpy_s(_in_rolling_mean, _len_rolling_mean, _tmp_rolling_mean, _len_rolling_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_rolling_variance != NULL && _len_rolling_variance != 0) {
+		if ( _len_rolling_variance % sizeof(*_tmp_rolling_variance) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_rolling_variance = (float*)malloc(_len_rolling_variance);
+		if (_in_rolling_variance == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_rolling_variance, _len_rolling_variance, _tmp_rolling_variance, _len_rolling_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_scales != NULL && _len_scales != 0) {
+		if ( _len_scales % sizeof(*_tmp_scales) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_scales = (float*)malloc(_len_scales);
+		if (_in_scales == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_scales, _len_scales, _tmp_scales, _len_scales)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x != NULL && _len_x != 0) {
+		if ( _len_x % sizeof(*_tmp_x) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x = (float*)malloc(_len_x);
+		if (_in_x == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x, _len_x, _tmp_x, _len_x)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x_norm != NULL && _len_x_norm != 0) {
+		if ( _len_x_norm % sizeof(*_tmp_x_norm) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x_norm = (float*)malloc(_len_x_norm);
+		if (_in_x_norm == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x_norm, _len_x_norm, _tmp_x_norm, _len_x_norm)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_mean != NULL && _len_mean != 0) {
+		if ( _len_mean % sizeof(*_tmp_mean) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_mean = (float*)malloc(_len_mean);
+		if (_in_mean == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_mean, _len_mean, _tmp_mean, _len_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_variance != NULL && _len_variance != 0) {
+		if ( _len_variance % sizeof(*_tmp_variance) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_variance = (float*)malloc(_len_variance);
+		if (_in_variance == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_variance, _len_variance, _tmp_variance, _len_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_forward_convolutional_layer(ms->ms_batch, ms->ms_ic, ms->ms_h, ms->ms_w, ms->ms_size, ms->ms_stride, ms->ms_pad, _tmp_n_filters, ms->ms_out_h, ms->ms_out_w, _in_weights, _tmp_weight_len, _in_input, _tmp_in_len, _in_output, _tmp_out_len, _in_biases, _tmp_bias_len, ms->ms_batch_normalize, ms->ms_train, ms->ms_outputs, _in_rolling_mean, _in_rolling_variance, _in_scales, _in_x, _in_x_norm, _in_mean, _in_variance, ms->ms_activation);
 	if (_in_output) {
 		if (memcpy_s(_tmp_output, _len_output, _in_output, _len_output)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_rolling_mean) {
+		if (memcpy_s(_tmp_rolling_mean, _len_rolling_mean, _in_rolling_mean, _len_rolling_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_rolling_variance) {
+		if (memcpy_s(_tmp_rolling_variance, _len_rolling_variance, _in_rolling_variance, _len_rolling_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_scales) {
+		if (memcpy_s(_tmp_scales, _len_scales, _in_scales, _len_scales)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_x) {
+		if (memcpy_s(_tmp_x, _len_x, _in_x, _len_x)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_x_norm) {
+		if (memcpy_s(_tmp_x_norm, _len_x_norm, _in_x_norm, _len_x_norm)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_mean) {
+		if (memcpy_s(_tmp_mean, _len_mean, _in_mean, _len_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_variance) {
+		if (memcpy_s(_tmp_variance, _len_variance, _in_variance, _len_variance)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
@@ -1300,6 +1551,13 @@ err:
 	if (_in_input) free(_in_input);
 	if (_in_output) free(_in_output);
 	if (_in_biases) free(_in_biases);
+	if (_in_rolling_mean) free(_in_rolling_mean);
+	if (_in_rolling_variance) free(_in_rolling_variance);
+	if (_in_scales) free(_in_scales);
+	if (_in_x) free(_in_x);
+	if (_in_x_norm) free(_in_x_norm);
+	if (_in_mean) free(_in_mean);
+	if (_in_variance) free(_in_variance);
 	return status;
 }
 
@@ -1678,12 +1936,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_dropout_layer(void* pms)
 			goto err;
 		}
 	}
-	if (_in_input) {
-		if (memcpy_s(_tmp_input, _len_input, _in_input, _len_input)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
 	if (_in_ndelta) {
 		if (memcpy_s(_tmp_ndelta, _len_ndelta, _in_ndelta, _len_ndelta)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -1732,6 +1984,31 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_convolutional_layer(void* pms)
 	float* _tmp_weight_updates = ms->ms_weight_updates;
 	size_t _len_weight_updates = _tmp_weight_len * sizeof(float);
 	float* _in_weight_updates = NULL;
+	float* _tmp_scale_updates = ms->ms_scale_updates;
+	size_t _tmp_out_c = ms->ms_out_c;
+	size_t _len_scale_updates = _tmp_out_c * sizeof(float);
+	float* _in_scale_updates = NULL;
+	float* _tmp_x = ms->ms_x;
+	size_t _len_x = _tmp_output_len * sizeof(float);
+	float* _in_x = NULL;
+	float* _tmp_x_norm = ms->ms_x_norm;
+	size_t _len_x_norm = _tmp_output_len * sizeof(float);
+	float* _in_x_norm = NULL;
+	float* _tmp_mean = ms->ms_mean;
+	size_t _len_mean = _tmp_out_c * sizeof(float);
+	float* _in_mean = NULL;
+	float* _tmp_variance = ms->ms_variance;
+	size_t _len_variance = _tmp_out_c * sizeof(float);
+	float* _in_variance = NULL;
+	float* _tmp_mean_delta = ms->ms_mean_delta;
+	size_t _len_mean_delta = _tmp_out_c * sizeof(float);
+	float* _in_mean_delta = NULL;
+	float* _tmp_variance_delta = ms->ms_variance_delta;
+	size_t _len_variance_delta = _tmp_out_c * sizeof(float);
+	float* _in_variance_delta = NULL;
+	float* _tmp_scales = ms->ms_scales;
+	size_t _len_scales = _tmp_out_c * sizeof(float);
+	float* _in_scales = NULL;
 
 	if (sizeof(*_tmp_output) != 0 &&
 		(size_t)_tmp_output_len > (SIZE_MAX / sizeof(*_tmp_output))) {
@@ -1768,6 +2045,46 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_convolutional_layer(void* pms)
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
+	if (sizeof(*_tmp_scale_updates) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_scale_updates))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x) != 0 &&
+		(size_t)_tmp_output_len > (SIZE_MAX / sizeof(*_tmp_x))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_x_norm) != 0 &&
+		(size_t)_tmp_output_len > (SIZE_MAX / sizeof(*_tmp_x_norm))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_mean) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_mean))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_variance) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_variance))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_mean_delta) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_mean_delta))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_variance_delta) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_variance_delta))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
+	if (sizeof(*_tmp_scales) != 0 &&
+		(size_t)_tmp_out_c > (SIZE_MAX / sizeof(*_tmp_scales))) {
+		return SGX_ERROR_INVALID_PARAMETER;
+	}
+
 	CHECK_UNIQUE_POINTER(_tmp_output, _len_output);
 	CHECK_UNIQUE_POINTER(_tmp_input, _len_input);
 	CHECK_UNIQUE_POINTER(_tmp_delta, _len_delta);
@@ -1775,6 +2092,14 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_convolutional_layer(void* pms)
 	CHECK_UNIQUE_POINTER(_tmp_weight, _len_weight);
 	CHECK_UNIQUE_POINTER(_tmp_bias_updates, _len_bias_updates);
 	CHECK_UNIQUE_POINTER(_tmp_weight_updates, _len_weight_updates);
+	CHECK_UNIQUE_POINTER(_tmp_scale_updates, _len_scale_updates);
+	CHECK_UNIQUE_POINTER(_tmp_x, _len_x);
+	CHECK_UNIQUE_POINTER(_tmp_x_norm, _len_x_norm);
+	CHECK_UNIQUE_POINTER(_tmp_mean, _len_mean);
+	CHECK_UNIQUE_POINTER(_tmp_variance, _len_variance);
+	CHECK_UNIQUE_POINTER(_tmp_mean_delta, _len_mean_delta);
+	CHECK_UNIQUE_POINTER(_tmp_variance_delta, _len_variance_delta);
+	CHECK_UNIQUE_POINTER(_tmp_scales, _len_scales);
 
 	//
 	// fence after pointer checks
@@ -1907,8 +2232,152 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_convolutional_layer(void* pms)
 		}
 
 	}
+	if (_tmp_scale_updates != NULL && _len_scale_updates != 0) {
+		if ( _len_scale_updates % sizeof(*_tmp_scale_updates) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_scale_updates = (float*)malloc(_len_scale_updates);
+		if (_in_scale_updates == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ecall_backward_convolutional_layer(ms->ms_batch, ms->ms_m, ms->ms_size, ms->ms_ic, ms->ms_out_h, ms->ms_out_w, ms->ms_h, ms->ms_w, ms->ms_stride, ms->ms_pad, _tmp_bias_len, _tmp_output_len, _tmp_input_len, _tmp_weight_len, ms->ms_activation, _in_output, _in_input, _in_delta, _in_ndelta, _in_weight, _in_bias_updates, _in_weight_updates);
+		if (memcpy_s(_in_scale_updates, _len_scale_updates, _tmp_scale_updates, _len_scale_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x != NULL && _len_x != 0) {
+		if ( _len_x % sizeof(*_tmp_x) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x = (float*)malloc(_len_x);
+		if (_in_x == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x, _len_x, _tmp_x, _len_x)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_x_norm != NULL && _len_x_norm != 0) {
+		if ( _len_x_norm % sizeof(*_tmp_x_norm) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_x_norm = (float*)malloc(_len_x_norm);
+		if (_in_x_norm == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_x_norm, _len_x_norm, _tmp_x_norm, _len_x_norm)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_mean != NULL && _len_mean != 0) {
+		if ( _len_mean % sizeof(*_tmp_mean) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_mean = (float*)malloc(_len_mean);
+		if (_in_mean == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_mean, _len_mean, _tmp_mean, _len_mean)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_variance != NULL && _len_variance != 0) {
+		if ( _len_variance % sizeof(*_tmp_variance) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_variance = (float*)malloc(_len_variance);
+		if (_in_variance == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_variance, _len_variance, _tmp_variance, _len_variance)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_mean_delta != NULL && _len_mean_delta != 0) {
+		if ( _len_mean_delta % sizeof(*_tmp_mean_delta) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_mean_delta = (float*)malloc(_len_mean_delta);
+		if (_in_mean_delta == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_mean_delta, _len_mean_delta, _tmp_mean_delta, _len_mean_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_variance_delta != NULL && _len_variance_delta != 0) {
+		if ( _len_variance_delta % sizeof(*_tmp_variance_delta) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_variance_delta = (float*)malloc(_len_variance_delta);
+		if (_in_variance_delta == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_variance_delta, _len_variance_delta, _tmp_variance_delta, _len_variance_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_scales != NULL && _len_scales != 0) {
+		if ( _len_scales % sizeof(*_tmp_scales) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_scales = (float*)malloc(_len_scales);
+		if (_in_scales == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_scales, _len_scales, _tmp_scales, _len_scales)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ecall_backward_convolutional_layer(ms->ms_batch, _tmp_out_c, ms->ms_size, ms->ms_ic, ms->ms_out_h, ms->ms_out_w, ms->ms_h, ms->ms_w, ms->ms_stride, ms->ms_pad, _tmp_bias_len, _tmp_output_len, _tmp_input_len, _tmp_weight_len, ms->ms_activation, _in_output, _in_input, _in_delta, _in_ndelta, _in_weight, _in_bias_updates, _in_weight_updates, ms->ms_bn, _in_scale_updates, _in_x, _in_x_norm, _in_mean, _in_variance, _in_mean_delta, _in_variance_delta, _in_scales);
 	if (_in_ndelta) {
 		if (memcpy_s(_tmp_ndelta, _len_ndelta, _in_ndelta, _len_ndelta)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -1927,6 +2396,30 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_convolutional_layer(void* pms)
 			goto err;
 		}
 	}
+	if (_in_scale_updates) {
+		if (memcpy_s(_tmp_scale_updates, _len_scale_updates, _in_scale_updates, _len_scale_updates)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_mean_delta) {
+		if (memcpy_s(_tmp_mean_delta, _len_mean_delta, _in_mean_delta, _len_mean_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_variance_delta) {
+		if (memcpy_s(_tmp_variance_delta, _len_variance_delta, _in_variance_delta, _len_variance_delta)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_scales) {
+		if (memcpy_s(_tmp_scales, _len_scales, _in_scales, _len_scales)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
 
 err:
 	if (_in_output) free(_in_output);
@@ -1936,6 +2429,14 @@ err:
 	if (_in_weight) free(_in_weight);
 	if (_in_bias_updates) free(_in_bias_updates);
 	if (_in_weight_updates) free(_in_weight_updates);
+	if (_in_scale_updates) free(_in_scale_updates);
+	if (_in_x) free(_in_x);
+	if (_in_x_norm) free(_in_x_norm);
+	if (_in_mean) free(_in_mean);
+	if (_in_variance) free(_in_variance);
+	if (_in_mean_delta) free(_in_mean_delta);
+	if (_in_variance_delta) free(_in_variance_delta);
+	if (_in_scales) free(_in_scales);
 	return status;
 }
 
@@ -2486,18 +2987,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_backward_connected_layer(void* pms)
 	}
 	if (_in_scale_updates) {
 		if (memcpy_s(_tmp_scale_updates, _len_scale_updates, _in_scale_updates, _len_scale_updates)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
-	if (_in_x) {
-		if (memcpy_s(_tmp_x, _len_x, _in_x, _len_x)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
-	if (_in_x_norm) {
-		if (memcpy_s(_tmp_x_norm, _len_x_norm, _in_x_norm, _len_x_norm)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}

@@ -36,15 +36,20 @@ void ecall_backward_connected_layer(int bn, size_t out_c, size_t out_w, size_t o
 
     crypt_aux((uint8_t *)pass, pass_len, (unsigned char*)input, sizeof(float) * inputs, batch);
     crypt_aux((uint8_t *)pass, pass_len, (unsigned char*)output, sizeof(float) * outputs, batch);
+
+
+
     int i;
 
     gradient_array(output, a_len, activation, delta);
     backward_bias(bias_updates, delta, batch, out_c, out_w*out_h);
     if(bn){
+        crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)x, sizeof(float) * outputs, batch);
+        crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)x_norm, sizeof(float) * outputs, batch);
         backward_batchnorm_layer(batch, out_c, out_w, out_h,
                               bias_updates, delta, scale_updates, x_norm, x,
                               mean, variance, mean_delta, variance_delta, scales);   
-        }
+    }
     // 计算当前全连接层的权重更新值
     int m = outputs;
     int k = batch;
@@ -75,7 +80,7 @@ void ecall_backward_cost_layer(size_t input_size, int scale,
     axpy_cpu(input_size, scale, delta, 1, n_delta, 1);
 }
 
-void ecall_backward_convolutional_layer(size_t batch ,size_t m, size_t size, size_t ic, size_t out_h, size_t out_w, size_t h, size_t w,
+void ecall_backward_convolutional_layer(size_t batch ,size_t m /*卷积核个数*/, size_t size, size_t ic, size_t out_h, size_t out_w, size_t h, size_t w,
                                         size_t stride, size_t pad,  size_t bias_len, 
                                         size_t output_len, size_t input_len, size_t weight_len, ACTIVATION activation, 
                                         float* output,
@@ -84,7 +89,13 @@ void ecall_backward_convolutional_layer(size_t batch ,size_t m, size_t size, siz
                                         float* ndelta,
                                         float* weights,
                                         float* bias_updates,
-                                        float* weight_updates) 
+                                        float* weight_updates,
+                                        // For Batch Normalization 
+                                        int bn,
+                                        float* scale_updates, float* x, float *x_norm,
+                                        float* mean, float* variance, float* mean_delta,
+                                        float* variance_delta, float* scales
+                                        ) 
 {
 
     crypt_aux(pass, pass_len, (unsigned char*)input, (sizeof(float) * input_len / batch), batch);
@@ -98,9 +109,14 @@ void ecall_backward_convolutional_layer(size_t batch ,size_t m, size_t size, siz
     int k = out_w * out_h;    // 每张输出特征图的元素个数：out_w，out_h是输出特征图的宽高
     float *workspace = (float*)calloc(out_h * out_w * n, sizeof(float));
     gradient_array(output, output_len, activation, delta);
-    if(0 /*l.batch_normalize*/){
-        //backward_batchnorm_layer(l, net);
-    } else {
+    if(bn){
+            size_t outputs = m * out_w * out_h;
+            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)x, sizeof(float) * outputs, batch);
+            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)x_norm, sizeof(float) * outputs, batch);
+            backward_batchnorm_layer(batch, m, out_w, out_h,
+                                bias_updates, delta, scale_updates, x_norm, x,
+                                mean, variance, mean_delta, variance_delta, scales);   
+        }else {
         backward_bias(bias_updates, delta, batch, m, k);
     }
     for(i = 0; i < batch; ++i){

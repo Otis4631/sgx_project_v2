@@ -105,7 +105,7 @@ void update_connected_layer(connected_layer l, int batch, float learning_rate, f
     scal_cpu(l.outputs, momentum, l.bias_updates, 1);
 
     if(l.batch_normalize){
-        axpy_cpu(l.outputs, -learning_rate/batch, l.scale_updates, 1, l.scales, 1);
+        axpy_cpu(l.outputs, learning_rate/batch, l.scale_updates, 1, l.scales, 1);
         scal_cpu(l.outputs, momentum, l.scale_updates, 1);
     }
 

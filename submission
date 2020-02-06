@@ -5,4 +5,6 @@ Batch: 256
 Time: 3.4s 
 Space: 14976KB ≈ 15MB
 
+第一层卷积中添加了batch normalization 后变为 4.1s, 主要因为对l.x, l.x_norm 加解密耗时。
+
 

@@ -52,11 +52,14 @@ int e_forward_convolutional_layer(layer l, network net)
     long a_size = k * m;
     long b_size = n * k;
     long c_size = n * m;
-    sgx_status_t ret = ecall_forward_convolutional_layer(EID, l.batch, l.c, l.h, l.w, l.size, l.stride, l.pad, l.n, l.out_h, l.out_w, 
+    sgx_status_t ret = ecall_forward_convolutional_layer(EID, l.batch, l.c, l.h, l.w, l.size, l.stride, l.pad, l.out_c, l.out_h, l.out_w, 
                                         l.weights, a_size, 
                                         net.input, l.inputs * l.batch,
                                         l.output, l.batch * l.outputs, 
                                         l.biases, l.n,
+                                        l.batch_normalize, net.train, l.outputs,
+                                        l.rolling_mean, l.rolling_variance, l.scales, l.x, l.x_norm,
+                                        l.mean, l.variance,
                                         l.activation);
     if(ret != SGX_SUCCESS) {
         print_error_message(ret);

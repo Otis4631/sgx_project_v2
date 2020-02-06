@@ -5,7 +5,7 @@ enclave{
                                     [in, count=in_len]          float* input,
                                     [in, out, count=in_len]     float* ndelta);
 
-        public void ecall_backward_convolutional_layer(size_t batch ,size_t m, size_t size, size_t ic, size_t out_h, size_t out_w, size_t h, size_t w,
+        public void ecall_backward_convolutional_layer(size_t batch ,size_t out_c, size_t size, size_t ic, size_t out_h, size_t out_w, size_t h, size_t w,
                                     size_t stride, size_t pad, size_t bias_len, 
                                     size_t output_len, size_t input_len, size_t weight_len, ACTIVATION activation, 
                                     [in, count=output_len]      float* output,
@@ -14,7 +14,17 @@ enclave{
                                     [in, out, count=input_len]  float* ndelta,
                                     [in, count=weight_len]      float* weight,
                                     [in, out, count=bias_len]   float* bias_updates,
-                                    [in, out, count=weight_len] float* weight_updates);
+                                    [in, out, count=weight_len] float* weight_updates,
+                                    int bn,
+                                    [in, out, count=out_c]      float* scale_updates, 
+                                    [in, count=output_len]      float* x, 
+                                    [in, count=output_len]      float* x_norm,
+                                    [in, count=out_c]           float* mean, 
+                                    [in, count=out_c]           float* variance, 
+                                    [in, out, count=out_c]      float* mean_delta,
+                                    [in, out, count=out_c]      float* variance_delta, 
+                                    [in, out, count=out_c]      float* scales
+                                    );
 
         public void ecall_backward_cost_layer(size_t input_size, int scale, 
                                     [in, count=input_size]      float* delta,
@@ -30,8 +40,8 @@ enclave{
                                     [in, out, count=outputs]    float* bias_updates,
                                     [in, out, count=c_len]      float* weight_updates,
                                     [in, out, count=out_c]      float* scale_updates,
-                                    [in, out, count=a_len]      float* x,
-                                    [in, out, count=a_len]      float* x_norm,
+                                    [in, count=a_len]           float* x,
+                                    [in, count=a_len]           float* x_norm,
                                     [in, count=out_c]           float* mean,
                                     [in, count=out_c]           float* variance,
                                     [in, out, count=out_c]      float* mean_delta,

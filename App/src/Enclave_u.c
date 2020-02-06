@@ -117,6 +117,16 @@ typedef struct ms_ecall_forward_convolutional_layer_t {
 	int ms_out_len;
 	float* ms_biases;
 	int ms_bias_len;
+	int ms_batch_normalize;
+	int ms_train;
+	int ms_outputs;
+	float* ms_rolling_mean;
+	float* ms_rolling_variance;
+	float* ms_scales;
+	float* ms_x;
+	float* ms_x_norm;
+	float* ms_mean;
+	float* ms_variance;
 	ACTIVATION ms_activation;
 } ms_ecall_forward_convolutional_layer_t;
 
@@ -153,7 +163,7 @@ typedef struct ms_ecall_backward_dropout_layer_t {
 
 typedef struct ms_ecall_backward_convolutional_layer_t {
 	size_t ms_batch;
-	size_t ms_m;
+	size_t ms_out_c;
 	size_t ms_size;
 	size_t ms_ic;
 	size_t ms_out_h;
@@ -174,6 +184,15 @@ typedef struct ms_ecall_backward_convolutional_layer_t {
 	float* ms_weight;
 	float* ms_bias_updates;
 	float* ms_weight_updates;
+	int ms_bn;
+	float* ms_scale_updates;
+	float* ms_x;
+	float* ms_x_norm;
+	float* ms_mean;
+	float* ms_variance;
+	float* ms_mean_delta;
+	float* ms_variance_delta;
+	float* ms_scales;
 } ms_ecall_backward_convolutional_layer_t;
 
 typedef struct ms_ecall_backward_cost_layer_t {
@@ -366,7 +385,7 @@ sgx_status_t ecall_forward_maxpool_layer(sgx_enclave_id_t eid, int pad, int h, i
 	return status;
 }
 
-sgx_status_t ecall_forward_convolutional_layer(sgx_enclave_id_t eid, int batch, int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, float* weights, int weight_len, float* input, int in_len, float* output, int out_len, float* biases, int bias_len, ACTIVATION activation)
+sgx_status_t ecall_forward_convolutional_layer(sgx_enclave_id_t eid, int batch, int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, float* weights, int weight_len, float* input, int in_len, float* output, int out_len, float* biases, int bias_len, int batch_normalize, int train, int outputs, float* rolling_mean, float* rolling_variance, float* scales, float* x, float* x_norm, float* mean, float* variance, ACTIVATION activation)
 {
 	sgx_status_t status;
 	ms_ecall_forward_convolutional_layer_t ms;
@@ -388,6 +407,16 @@ sgx_status_t ecall_forward_convolutional_layer(sgx_enclave_id_t eid, int batch, 
 	ms.ms_out_len = out_len;
 	ms.ms_biases = biases;
 	ms.ms_bias_len = bias_len;
+	ms.ms_batch_normalize = batch_normalize;
+	ms.ms_train = train;
+	ms.ms_outputs = outputs;
+	ms.ms_rolling_mean = rolling_mean;
+	ms.ms_rolling_variance = rolling_variance;
+	ms.ms_scales = scales;
+	ms.ms_x = x;
+	ms.ms_x_norm = x_norm;
+	ms.ms_mean = mean;
+	ms.ms_variance = variance;
 	ms.ms_activation = activation;
 	status = sgx_ecall(eid, 7, &ocall_table_Enclave, &ms);
 	return status;
@@ -439,12 +468,12 @@ sgx_status_t ecall_backward_dropout_layer(sgx_enclave_id_t eid, int train, size_
 	return status;
 }
 
-sgx_status_t ecall_backward_convolutional_layer(sgx_enclave_id_t eid, size_t batch, size_t m, size_t size, size_t ic, size_t out_h, size_t out_w, size_t h, size_t w, size_t stride, size_t pad, size_t bias_len, size_t output_len, size_t input_len, size_t weight_len, ACTIVATION activation, float* output, float* input, float* delta, float* ndelta, float* weight, float* bias_updates, float* weight_updates)
+sgx_status_t ecall_backward_convolutional_layer(sgx_enclave_id_t eid, size_t batch, size_t out_c, size_t size, size_t ic, size_t out_h, size_t out_w, size_t h, size_t w, size_t stride, size_t pad, size_t bias_len, size_t output_len, size_t input_len, size_t weight_len, ACTIVATION activation, float* output, float* input, float* delta, float* ndelta, float* weight, float* bias_updates, float* weight_updates, int bn, float* scale_updates, float* x, float* x_norm, float* mean, float* variance, float* mean_delta, float* variance_delta, float* scales)
 {
 	sgx_status_t status;
 	ms_ecall_backward_convolutional_layer_t ms;
 	ms.ms_batch = batch;
-	ms.ms_m = m;
+	ms.ms_out_c = out_c;
 	ms.ms_size = size;
 	ms.ms_ic = ic;
 	ms.ms_out_h = out_h;
@@ -465,6 +494,15 @@ sgx_status_t ecall_backward_convolutional_layer(sgx_enclave_id_t eid, size_t bat
 	ms.ms_weight = weight;
 	ms.ms_bias_updates = bias_updates;
 	ms.ms_weight_updates = weight_updates;
+	ms.ms_bn = bn;
+	ms.ms_scale_updates = scale_updates;
+	ms.ms_x = x;
+	ms.ms_x_norm = x_norm;
+	ms.ms_mean = mean;
+	ms.ms_variance = variance;
+	ms.ms_mean_delta = mean_delta;
+	ms.ms_variance_delta = variance_delta;
+	ms.ms_scales = scales;
 	status = sgx_ecall(eid, 11, &ocall_table_Enclave, &ms);
 	return status;
 }
