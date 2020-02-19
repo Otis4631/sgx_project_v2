@@ -118,19 +118,27 @@ void train_csv(network* net, list* data_options) {
     pthread_t load_thread;
     args.d = &buffer;
     load_thread = load_data(args);
-    clock_t time;
+    struct timeval t1,t2;
+    double timeuse;
+    time_t tt;
+    double ttused;
+    double time_sum = 0;
     int epoch = (*net->seen) / N; // 当前处理的图片数 除以 总图片数
-    while(get_current_batch(net) < net-> max_batches){
-        time = clock();
+    while(get_current_batch(net) < net->max_batches){
         pthread_join(load_thread, 0);
         train = buffer;
         load_thread = load_data(args);
         //printf("Loaded: %lf seconds\n", sec(clock()-time));
-        time = clock();
+        gettimeofday(&t1, NULL);
+        tt = clock();
         float loss = 0;
         loss = train_network(net, train);
-        printf("Epoch: %d, Batch: %d, Loss: %g, Learning Rate: %g, Time used %.3fs, Image Processed: %d\n",
-        epoch, get_current_batch(net), loss, get_current_rate(net), sec(clock()-time), *net->seen);
+        gettimeofday(&t2, NULL);
+        timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
+        ttused = sec(clock() - tt);
+        time_sum += timeuse;
+        printf("Epoch: %d, Batch: %d, Loss: %g, Learning Rate: %g, Time used %.3fs/%.3fs, Image Processed: %d\n",
+        epoch, get_current_batch(net), loss, get_current_rate(net), timeuse, ttused,  *net->seen);
         free_data(train);
         if(*net->seen / N > epoch){
             epoch = *net->seen / N;
@@ -139,7 +147,6 @@ void train_csv(network* net, list* data_options) {
             save_weights(*net, buff);
         }
     }
-    
     // pthread_join(load_thread, 0);
     // net->input = buffer.X.vals[0];
 
@@ -149,6 +156,7 @@ void train_csv(network* net, list* data_options) {
     // printf("OUT:%f\n", *out);
     char buff[256];
     sprintf(buff, "%s/%s.weights", backup_directory, base);
+    printf("Average time used: %.3fs\n", time_sum / get_current_batch(net));
     save_weights(*net, buff);
     free_network(*net);
     free_list(data_options);
@@ -186,104 +194,6 @@ void predict(char *datacfg, char *cfgfile, char *weightfile) {
 
 }
 
-// void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear)
-// {
-//     int i;
-//     float avg_loss = -1;
-//     char *base = basecfg(cfgfile);
-//     printf("%s\n", base);
-//     printf("%d\n", ngpus);
-
-//     srand(time(0));
-//     int seed = rand();
-
-//     srand(time(0));
-//     network net = parse_network_cfg(cfgfile);
-
-//     int imgs = net.batch * net.subdivisions; // net.subdivisions = 1
-//     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
-//     list *options = read_data_cfg(datacfg);
-
-//     char *backup_directory = option_find_str(options, "backup", "/backup/");
-//     char *label_list = option_find_str(options, "labels", "data/labels.list");
-//     char *train_list = option_find_str(options, "train", "data/train.list");
-//     int classes = option_find_int(options, "classes", 2);
-
-//     char **labels = get_labels(label_list);
-//     list *plist = get_paths(train_list);
-//     char **paths = (char **)list_to_array(plist);
-//     printf("%d\n", plist->size);
-//     int N = plist->size;
-//     clock_t time;
-
-//     load_args args = {0};
-//     args.w = net.w;
-//     args.h = net.h;
-//     args.threads = 32;
-//     args.hierarchy = net.hierarchy;
-
-//     args.min = net.min_crop;
-//     args.max = net.max_crop;
-//     args.angle = net.angle;
-//     args.aspect = net.aspect;
-//     args.exposure = net.exposure;
-//     args.saturation = net.saturation;
-//     args.hue = net.hue;
-//     args.size = net.w;
-
-//     args.paths = paths;
-//     args.classes = classes;
-//     args.n = imgs;
-//     args.m = N;
-//     args.labels = labels;
-//     args.type = CLASSIFICATION_DATA;
-
-//     data train;
-//     data buffer;
-//     pthread_t load_thread;
-//     args.d = &buffer;
-//     load_thread = load_data(args);
-
-//     int epoch = (*net.seen)/N; // 当前处理的图片数 除以 总图片数
-//     while(get_current_batch(net) < net.max_batches || net.max_batches == 0){
-//         time=clock();
-
-//         pthread_join(load_thread, 0);
-//         train = buffer;
-//         load_thread = load_data(args);
-
-//         printf("Loaded: %lf seconds\n", sec(clock()-time));
-//         time=clock();
-
-//         float loss = 0;
-
-//         loss = train_network(net, train);
-//         if(avg_loss == -1) avg_loss = loss;
-//         avg_loss = avg_loss*.9 + loss*.1;
-//         printf("%d, %.3f: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), (float)(*net->seen)/N, loss, avg_loss, get_current_rate(&net), sec(clock()-time), *net.seen);
-//         free_data(train);
-//         if(*net.seen/N > epoch){
-//             epoch = *net.seen/N;
-//             char buff[256];
-//             sprintf(buff, "%s/%s_%d.weights",backup_directory,base, epoch);
-//             save_weights(net, buff);
-//         }
-//         if(get_current_batch(&net)%1000 == 0){ // 每 1000 epoch 保存一次
-//             char buff[256];
-//             sprintf(buff, "%s/%s.backup",backup_directory,base);
-//             save_weights(net, buff);
-//         }
-//     }
-//     char buff[256];
-//     sprintf(buff, "%s/%s.weights", backup_directory, base);
-//     save_weights(net, buff);
-
-//     free_network(net);
-//     free_ptrs((void**)labels, classes);
-//     free_ptrs((void**)paths, plist->size);
-//     free_list(plist);
-//     free(base);
-// }
 
 void validate_classifier_crop(char *datacfg, char *filename, char *weightfile)
 {

@@ -1,2 +1,0 @@
-note：
-前向传播中，层输入是net.input，层对象没有input属性，层对象有l.output，一层传播完成后net.input = l.output。

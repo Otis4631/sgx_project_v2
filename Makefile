@@ -1,11 +1,10 @@
 ######## SGX SDK Settings fixed ########
 OPENMP ?= 0
-
 # ?= 如果没有被赋值过就赋予等号后面的值
 SGX_SDK ?= /root/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
-SGX_DEBUG ?= 1
+SGX_DEBUG ?= 0
 
 #shell命令：getconf，查看LONG_BIT的位数
 ifeq ($(shell getconf LONG_BIT), 32)
@@ -44,9 +43,6 @@ endif
 
 #-Wall -Wextra：显示警告
 #
-No_warning_flags := 
-SGX_COMMON_FLAGS += $(No_warning_flags)
-
 SGX_COMMON_FLAGS +=  -Winit-self -Wpointer-arith -Wreturn-type \
                     -Waddress -Wsequence-point -Wformat-security \
                     -Wmissing-include-dirs -Wfloat-equal -Wundef -Wshadow \
@@ -118,12 +114,7 @@ else
 	App_Link_Flags += -lsgx_uae_service
 endif
 
-
-
 App_Name := application
-
-
-
 ######## Enclave Settings ########
 ifneq ($(SGX_MODE), HW)
 	Trts_Library_Name := sgx_trts_sim
@@ -135,9 +126,6 @@ endif
 
 ENCLAVE_SRCDIR := Enclave/src/
 ENCLAVE_OBJDIR := Enclave/obj/
-
-
-
 
 
 Enclave_Cpp_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}*.cpp))
@@ -205,11 +193,11 @@ endif
 endif
 
 .PHONY: all target run
-all: .config_$(Build_Mode)_$(SGX_ARCH) #.config_HW_DEBUG_x86
-	@$(MAKE) target
+# all: .config_$(Build_Mode)_$(SGX_ARCH) #.config_HW_DEBUG_x86
+# 	@$(MAKE) target
 
 ifeq ($(Build_Mode), HW_RELEASE)
-target:  $(App_Name) $(Enclave_Name)
+all:  $(App_Name) $(Enclave_Name)
 	@echo "The project has been built in release hardware mode."
 	@echo "Please sign the $(Enclave_Name) first with your signing key before you run the $(App_Name) to launch and access the enclave."
 	@echo "To sign the enclave use the command:"
@@ -218,7 +206,7 @@ target:  $(App_Name) $(Enclave_Name)
 	@echo "To build the project in simulation mode set SGX_MODE=SIM. To build the project in prerelease mode set SGX_PRERELEASE=1 and SGX_MODE=HW."
 
 else
-target: $(App_Name) $(Signed_Enclave_Name)
+all: $(App_Name) $(Signed_Enclave_Name)
 ifeq ($(Build_Mode), HW_DEBUG)
 	@echo "The project has been built in debug hardware mode."
 else ifeq ($(Build_Mode), SIM_DEBUG)
@@ -239,9 +227,6 @@ ifneq ($(Build_Mode), HW_RELEASE)
 	@echo "RUN  =>  $(App_Name) [$(SGX_MODE)|$(SGX_ARCH), OK]"
 endif
 
-.config_$(Build_Mode)_$(SGX_ARCH):
-	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* $(Enclave_Cpp_Objects) Enclave/Enclave_t.*
-	@touch .config_$(Build_Mode)_$(SGX_ARCH)
 
 
 ######## App Objects ########
@@ -251,9 +236,6 @@ ${APP_SRCDIR}Enclave_u.h: $(SGX_EDGER8R) Enclave/Enclave.edl
 
 ${APP_SRCDIR}Enclave_u.c: ${APP_SRCDIR}Enclave_u.h
 
-# App/Enclave_u.o: App/Enclave_u.c
-# 	@$(CC) $(SGX_COMMON_CFLAGS) $(App_C_Flags) -c $< -o $@
-# 	@echo "generated $@  using  $<"
 
 ${APP_OBJDIR}%.o: ${APP_SRCDIR}%.cpp ${APP_SRCDIR}Enclave_u.h ${App_Header}
 	@echo "generating $@ using  $<"
@@ -292,7 +274,6 @@ ${ENCLAVE_OBJDIR}%.o: ${ENCLAVE_SRCDIR}%.c ${ENCLAVE_SRCDIR}Enclave_t.h
 
 
 $(Enclave_Name): $(Enclave_Objects)  ${ENCLAVE_OBJDIR}Enclave_t.o
-	#@echo "Line 232: going to build $@ using $(Enclave_Objects)"
 	@$(CXX) $^ -o $@ $(Enclave_Link_Flags)
 	@echo "LINK =>  $@"
 

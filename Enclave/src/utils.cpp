@@ -29,7 +29,7 @@ void ce_forward(int batch, int classes, float *pred, float *truth, float *delta,
     softmax_cpu(pred, classes, batch, classes, 1, 0, 1, 1, delta); //delta 中暂存softmax的值
     size_t index = 0;
     for(int i = 0; i < batch; i++) {
-        index = i * classes + (int)truth[i];
+        index = (i * classes + (int)truth[i] % classes);
         float a = delta[index];
         error[i] = -log(a);
         delta[index] -= 1;

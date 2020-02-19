@@ -16,8 +16,6 @@ void swap_binary(convolutional_layer *l)
     float *swap = l->weights;
     l->weights = l->binary_weights;
     l->binary_weights = swap;
-
-
 }
 
 void binarize_weights(float *weights, int n, int size, float *binary)

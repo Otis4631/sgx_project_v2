@@ -14,9 +14,6 @@ void crypt_aux(const unsigned char *key, unsigned long key_len, unsigned char *D
     }
 }
 
-// void crypt_aux(unsigned char *key, unsigned long key_len, unsigned char *Data, int size, int cnt) {
-//     rc4_crypt(key, key_len, Data, cnt * size);
-// }
 
 void rc4_crypt(unsigned char *key, unsigned long key_len, unsigned char *Data, unsigned long Len) //加解密
 {

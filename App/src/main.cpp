@@ -85,7 +85,7 @@ int main(int argc, char ** argv){
         return -1;
    // predict("data/conv_test.cfg", "cfg/mynet.cfg", NULL);
     if(0 == strcmp(argv[1], "t"))
-        train("data/e_train.cfg", "cfg/e_mynet.cfg", NULL);
+        train(argv[2], argv[3], NULL);
     else if(0 == strcmp(argv[1], "e"))
         encrypt();
     else
