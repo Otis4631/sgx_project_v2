@@ -4,7 +4,7 @@ OPENMP ?= 0
 SGX_SDK ?= /root/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
-SGX_DEBUG ?= 0
+SGX_DEBUG ?= 1
 
 #shell命令：getconf，查看LONG_BIT的位数
 ifeq ($(shell getconf LONG_BIT), 32)
@@ -28,16 +28,19 @@ ifeq ($(SGX_PRERELEASE), 1)
 $(error Cannot set SGX_DEBUG and SGX_PRERELEASE at the same time!!)
 endif
 endif
-
+MACRO := -DMACRO
 
 ifeq ($(SGX_DEBUG), 1)
 	SGX_COMMON_FLAGS += -O0 -g
+	MACRO += -DDEBUG
+
 else
 	SGX_COMMON_FLAGS += -Ofast
 endif
 
 ifeq ($(OMP), 1)
 	SGX_COMMON_FLAGS += -fopenmp
+	MACRO += -DOPENMP
 endif
 
 
@@ -46,7 +49,7 @@ endif
 SGX_COMMON_FLAGS +=  -Winit-self -Wpointer-arith -Wreturn-type \
                     -Waddress -Wsequence-point -Wformat-security \
                     -Wmissing-include-dirs -Wfloat-equal -Wundef -Wshadow \
-                    -Wcast-align  -Wredundant-decls 
+                    -Wcast-align  -Wredundant-decls $(MACRO)
 SGX_COMMON_CFLAGS := $(SGX_COMMON_FLAGS) -Wjump-misses-init -Wstrict-prototypes
 SGX_COMMON_CXXFLAGS := $(SGX_COMMON_FLAGS) -Wnon-virtual-dtor -std=c++11
 

@@ -7,11 +7,11 @@ typedef unsigned long ULONG;
 
 
 void crypt_aux(const unsigned char *key, unsigned long key_len, unsigned char *Data, int size, int batch) {
-    unsigned char* p;
-    p = Data;
-    for(int i = 0; i < batch; i ++, p+= size) {
-        rc4_crypt(key, key_len, p, size);
-    }
+    // unsigned char* p;
+    // p = Data;
+    // for(int i = 0; i < batch; i ++, p+= size) {
+    //     rc4_crypt(key, key_len, p, size);
+    // }
 }
 
 

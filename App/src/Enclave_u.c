@@ -25,16 +25,13 @@ typedef struct ms_ecall_gemm_t {
 	int ms_N;
 	int ms_K;
 	float ms_ALPHA;
-	float* ms_A;
+	float** ms_A;
 	int ms_lda;
-	float* ms_B;
+	float** ms_B;
 	int ms_ldb;
 	float ms_BETA;
-	float* ms_C;
+	float** ms_C;
 	int ms_ldc;
-	int ms_a_size;
-	int ms_b_size;
-	int ms_c_size;
 } ms_ecall_gemm_t;
 
 typedef struct ms_ecall_activate_array_t {
@@ -236,6 +233,22 @@ typedef struct ms_ocall_print_string_t {
 	const char* ms_str;
 } ms_ocall_print_string_t;
 
+typedef struct ms_gemm_segmentation_t {
+	int ms_TA;
+	int ms_TB;
+	int ms_M;
+	int ms_N;
+	int ms_K;
+	float ms_ALPHA;
+	float** ms_A;
+	int ms_lda;
+	float** ms_B;
+	int ms_ldb;
+	float ms_BETA;
+	float** ms_C;
+	int ms_ldc;
+} ms_gemm_segmentation_t;
+
 static sgx_status_t SGX_CDECL Enclave_ocall_print_string(void* pms)
 {
 	ms_ocall_print_string_t* ms = SGX_CAST(ms_ocall_print_string_t*, pms);
@@ -244,13 +257,22 @@ static sgx_status_t SGX_CDECL Enclave_ocall_print_string(void* pms)
 	return SGX_SUCCESS;
 }
 
+static sgx_status_t SGX_CDECL Enclave_gemm_segmentation(void* pms)
+{
+	ms_gemm_segmentation_t* ms = SGX_CAST(ms_gemm_segmentation_t*, pms);
+	gemm_segmentation(ms->ms_TA, ms->ms_TB, ms->ms_M, ms->ms_N, ms->ms_K, ms->ms_ALPHA, ms->ms_A, ms->ms_lda, ms->ms_B, ms->ms_ldb, ms->ms_BETA, ms->ms_C, ms->ms_ldc);
+
+	return SGX_SUCCESS;
+}
+
 static const struct {
 	size_t nr_ocall;
-	void * table[1];
+	void * table[2];
 } ocall_table_Enclave = {
-	1,
+	2,
 	{
 		(void*)Enclave_ocall_print_string,
+		(void*)Enclave_gemm_segmentation,
 	}
 };
 sgx_status_t ecall_forward_dropout_layer(sgx_enclave_id_t eid, int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, float* rand, float* input)
@@ -280,7 +302,7 @@ sgx_status_t ecall_normalize_array(sgx_enclave_id_t eid, float* array, size_t ar
 	return status;
 }
 
-sgx_status_t ecall_gemm(sgx_enclave_id_t eid, int TA, int TB, int M, int N, int K, float ALPHA, float* A, int lda, float* B, int ldb, float BETA, float* C, int ldc, int a_size, int b_size, int c_size)
+sgx_status_t ecall_gemm(sgx_enclave_id_t eid, int TA, int TB, int M, int N, int K, float ALPHA, float** A, int lda, float** B, int ldb, float BETA, float** C, int ldc)
 {
 	sgx_status_t status;
 	ms_ecall_gemm_t ms;
@@ -297,9 +319,6 @@ sgx_status_t ecall_gemm(sgx_enclave_id_t eid, int TA, int TB, int M, int N, int 
 	ms.ms_BETA = BETA;
 	ms.ms_C = C;
 	ms.ms_ldc = ldc;
-	ms.ms_a_size = a_size;
-	ms.ms_b_size = b_size;
-	ms.ms_c_size = c_size;
 	status = sgx_ecall(eid, 2, &ocall_table_Enclave, &ms);
 	return status;
 }

@@ -53,10 +53,14 @@ typedef struct ecall_layer {
 #define OCALL_PRINT_STRING_DEFINED__
 void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print_string, (const char* str));
 #endif
+#ifndef GEMM_SEGMENTATION_DEFINED__
+#define GEMM_SEGMENTATION_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, gemm_segmentation, (int TA, int TB, int M, int N, int K, float ALPHA, float** A, int lda, float** B, int ldb, float BETA, float** C, int ldc));
+#endif
 
 sgx_status_t ecall_forward_dropout_layer(sgx_enclave_id_t eid, int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, float* rand, float* input);
 sgx_status_t ecall_normalize_array(sgx_enclave_id_t eid, float* array, size_t arr_len, size_t batch);
-sgx_status_t ecall_gemm(sgx_enclave_id_t eid, int TA, int TB, int M, int N, int K, float ALPHA, float* A, int lda, float* B, int ldb, float BETA, float* C, int ldc, int a_size, int b_size, int c_size);
+sgx_status_t ecall_gemm(sgx_enclave_id_t eid, int TA, int TB, int M, int N, int K, float ALPHA, float** A, int lda, float** B, int ldb, float BETA, float** C, int ldc);
 sgx_status_t ecall_activate_array(sgx_enclave_id_t eid, float* x, int n, ACTIVATION a);
 sgx_status_t ecall_avgpool_forward(sgx_enclave_id_t eid, int batch, int c, int fig_size, float* input, int input_len, float* output, int output_len);
 sgx_status_t ecall_forward_connected_layer(sgx_enclave_id_t eid, int TA, int TB, int M, int outputs, int K, int BN, int train, float* rolling_mean, float* rolling_variance, float* scales, float* x, float* x_norm, float* A, int lda, float* B, int ldb, float* C, int ldc, long int a_size, long int b_size, long int c_size, float* bias, float* mean, float* variance, ACTIVATION a);

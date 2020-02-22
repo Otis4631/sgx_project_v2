@@ -51,16 +51,13 @@ typedef struct ms_ecall_gemm_t {
 	int ms_N;
 	int ms_K;
 	float ms_ALPHA;
-	float* ms_A;
+	float** ms_A;
 	int ms_lda;
-	float* ms_B;
+	float** ms_B;
 	int ms_ldb;
 	float ms_BETA;
-	float* ms_C;
+	float** ms_C;
 	int ms_ldc;
-	int ms_a_size;
-	int ms_b_size;
-	int ms_c_size;
 } ms_ecall_gemm_t;
 
 typedef struct ms_ecall_activate_array_t {
@@ -262,6 +259,22 @@ typedef struct ms_ocall_print_string_t {
 	const char* ms_str;
 } ms_ocall_print_string_t;
 
+typedef struct ms_gemm_segmentation_t {
+	int ms_TA;
+	int ms_TB;
+	int ms_M;
+	int ms_N;
+	int ms_K;
+	float ms_ALPHA;
+	float** ms_A;
+	int ms_lda;
+	float** ms_B;
+	int ms_ldb;
+	float ms_BETA;
+	float** ms_C;
+	int ms_ldc;
+} ms_gemm_segmentation_t;
+
 static sgx_status_t SGX_CDECL sgx_ecall_forward_dropout_layer(void* pms)
 {
 	CHECK_REF_POINTER(pms, sizeof(ms_ecall_forward_dropout_layer_t));
@@ -421,31 +434,28 @@ static sgx_status_t SGX_CDECL sgx_ecall_gemm(void* pms)
 	sgx_lfence();
 	ms_ecall_gemm_t* ms = SGX_CAST(ms_ecall_gemm_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	float* _tmp_A = ms->ms_A;
-	int _tmp_a_size = ms->ms_a_size;
-	size_t _len_A = _tmp_a_size * sizeof(float);
-	float* _in_A = NULL;
-	float* _tmp_B = ms->ms_B;
-	int _tmp_b_size = ms->ms_b_size;
-	size_t _len_B = _tmp_b_size * sizeof(float);
-	float* _in_B = NULL;
-	float* _tmp_C = ms->ms_C;
-	int _tmp_c_size = ms->ms_c_size;
-	size_t _len_C = _tmp_c_size * sizeof(float);
-	float* _in_C = NULL;
+	float** _tmp_A = ms->ms_A;
+	size_t _len_A = 1 * sizeof(float*);
+	float** _in_A = NULL;
+	float** _tmp_B = ms->ms_B;
+	size_t _len_B = 1 * sizeof(float*);
+	float** _in_B = NULL;
+	float** _tmp_C = ms->ms_C;
+	size_t _len_C = 1 * sizeof(float*);
+	float** _in_C = NULL;
 
 	if (sizeof(*_tmp_A) != 0 &&
-		(size_t)_tmp_a_size > (SIZE_MAX / sizeof(*_tmp_A))) {
+		1 > (SIZE_MAX / sizeof(*_tmp_A))) {
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
 	if (sizeof(*_tmp_B) != 0 &&
-		(size_t)_tmp_b_size > (SIZE_MAX / sizeof(*_tmp_B))) {
+		1 > (SIZE_MAX / sizeof(*_tmp_B))) {
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
 	if (sizeof(*_tmp_C) != 0 &&
-		(size_t)_tmp_c_size > (SIZE_MAX / sizeof(*_tmp_C))) {
+		1 > (SIZE_MAX / sizeof(*_tmp_C))) {
 		return SGX_ERROR_INVALID_PARAMETER;
 	}
 
@@ -464,7 +474,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_gemm(void* pms)
 			status = SGX_ERROR_INVALID_PARAMETER;
 			goto err;
 		}
-		_in_A = (float*)malloc(_len_A);
+		_in_A = (float**)malloc(_len_A);
 		if (_in_A == NULL) {
 			status = SGX_ERROR_OUT_OF_MEMORY;
 			goto err;
@@ -482,7 +492,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_gemm(void* pms)
 			status = SGX_ERROR_INVALID_PARAMETER;
 			goto err;
 		}
-		_in_B = (float*)malloc(_len_B);
+		_in_B = (float**)malloc(_len_B);
 		if (_in_B == NULL) {
 			status = SGX_ERROR_OUT_OF_MEMORY;
 			goto err;
@@ -500,7 +510,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_gemm(void* pms)
 			status = SGX_ERROR_INVALID_PARAMETER;
 			goto err;
 		}
-		_in_C = (float*)malloc(_len_C);
+		_in_C = (float**)malloc(_len_C);
 		if (_in_C == NULL) {
 			status = SGX_ERROR_OUT_OF_MEMORY;
 			goto err;
@@ -513,13 +523,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_gemm(void* pms)
 
 	}
 
-	ecall_gemm(ms->ms_TA, ms->ms_TB, ms->ms_M, ms->ms_N, ms->ms_K, ms->ms_ALPHA, _in_A, ms->ms_lda, _in_B, ms->ms_ldb, ms->ms_BETA, _in_C, ms->ms_ldc, _tmp_a_size, _tmp_b_size, _tmp_c_size);
-	if (_in_C) {
-		if (memcpy_s(_tmp_C, _len_C, _in_C, _len_C)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
+	ecall_gemm(ms->ms_TA, ms->ms_TB, ms->ms_M, ms->ms_N, ms->ms_K, ms->ms_ALPHA, _in_A, ms->ms_lda, _in_B, ms->ms_ldb, ms->ms_BETA, _in_C, ms->ms_ldc);
 
 err:
 	if (_in_A) free(_in_A);
@@ -3054,10 +3058,11 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[1][14];
+	uint8_t entry_table[2][14];
 } g_dyn_entry_table = {
-	1,
+	2,
 	{
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
@@ -3104,6 +3109,104 @@ sgx_status_t SGX_CDECL ocall_print_string(const char* str)
 	}
 	
 	status = sgx_ocall(0, ms);
+
+	if (status == SGX_SUCCESS) {
+	}
+	sgx_ocfree();
+	return status;
+}
+
+sgx_status_t SGX_CDECL gemm_segmentation(int TA, int TB, int M, int N, int K, float ALPHA, float** A, int lda, float** B, int ldb, float BETA, float** C, int ldc)
+{
+	sgx_status_t status = SGX_SUCCESS;
+	size_t _len_A = 1 * sizeof(float*);
+	size_t _len_B = 1 * sizeof(float*);
+	size_t _len_C = 1 * sizeof(float*);
+
+	ms_gemm_segmentation_t* ms = NULL;
+	size_t ocalloc_size = sizeof(ms_gemm_segmentation_t);
+	void *__tmp = NULL;
+
+
+	CHECK_ENCLAVE_POINTER(A, _len_A);
+	CHECK_ENCLAVE_POINTER(B, _len_B);
+	CHECK_ENCLAVE_POINTER(C, _len_C);
+
+	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (A != NULL) ? _len_A : 0))
+		return SGX_ERROR_INVALID_PARAMETER;
+	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (B != NULL) ? _len_B : 0))
+		return SGX_ERROR_INVALID_PARAMETER;
+	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (C != NULL) ? _len_C : 0))
+		return SGX_ERROR_INVALID_PARAMETER;
+
+	__tmp = sgx_ocalloc(ocalloc_size);
+	if (__tmp == NULL) {
+		sgx_ocfree();
+		return SGX_ERROR_UNEXPECTED;
+	}
+	ms = (ms_gemm_segmentation_t*)__tmp;
+	__tmp = (void *)((size_t)__tmp + sizeof(ms_gemm_segmentation_t));
+	ocalloc_size -= sizeof(ms_gemm_segmentation_t);
+
+	ms->ms_TA = TA;
+	ms->ms_TB = TB;
+	ms->ms_M = M;
+	ms->ms_N = N;
+	ms->ms_K = K;
+	ms->ms_ALPHA = ALPHA;
+	if (A != NULL) {
+		ms->ms_A = (float**)__tmp;
+		if (_len_A % sizeof(*A) != 0) {
+			sgx_ocfree();
+			return SGX_ERROR_INVALID_PARAMETER;
+		}
+		if (memcpy_s(__tmp, ocalloc_size, A, _len_A)) {
+			sgx_ocfree();
+			return SGX_ERROR_UNEXPECTED;
+		}
+		__tmp = (void *)((size_t)__tmp + _len_A);
+		ocalloc_size -= _len_A;
+	} else {
+		ms->ms_A = NULL;
+	}
+	
+	ms->ms_lda = lda;
+	if (B != NULL) {
+		ms->ms_B = (float**)__tmp;
+		if (_len_B % sizeof(*B) != 0) {
+			sgx_ocfree();
+			return SGX_ERROR_INVALID_PARAMETER;
+		}
+		if (memcpy_s(__tmp, ocalloc_size, B, _len_B)) {
+			sgx_ocfree();
+			return SGX_ERROR_UNEXPECTED;
+		}
+		__tmp = (void *)((size_t)__tmp + _len_B);
+		ocalloc_size -= _len_B;
+	} else {
+		ms->ms_B = NULL;
+	}
+	
+	ms->ms_ldb = ldb;
+	ms->ms_BETA = BETA;
+	if (C != NULL) {
+		ms->ms_C = (float**)__tmp;
+		if (_len_C % sizeof(*C) != 0) {
+			sgx_ocfree();
+			return SGX_ERROR_INVALID_PARAMETER;
+		}
+		if (memcpy_s(__tmp, ocalloc_size, C, _len_C)) {
+			sgx_ocfree();
+			return SGX_ERROR_UNEXPECTED;
+		}
+		__tmp = (void *)((size_t)__tmp + _len_C);
+		ocalloc_size -= _len_C;
+	} else {
+		ms->ms_C = NULL;
+	}
+	
+	ms->ms_ldc = ldc;
+	status = sgx_ocall(1, ms);
 
 	if (status == SGX_SUCCESS) {
 	}

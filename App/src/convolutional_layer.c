@@ -355,12 +355,6 @@ void forward_convolutional_layer(convolutional_layer l, network net)
 
     // 是否进行二值化操作（这个操作应该只有第一个卷积层使用吧？因为下面直接对net.input操作，这个理解是错误的，因为在forward_network()含中，
     // 每进行一层都会将net.input = l.output，即下一层的输入被设置为当前层的输出）
-    if(l.xnor){
-        binarize_weights(l.weights, l.n, l.c*l.size*l.size, l.binary_weights);
-        swap_binary(&l);
-        binarize_cpu(net.input, l.c*l.h*l.w*l.batch, l.binary_input);
-        net.input = l.binary_input;
-    }
 
     int m = l.n;                // 该层卷积核个数
     int k = l.size*l.size*l.c;  // 该层每个卷积核的参数元素个数
@@ -423,7 +417,6 @@ void forward_convolutional_layer(convolutional_layer l, network net)
 
 
     activate_array(l.output, m*n*l.batch, l.activation);
-    if(l.binary || l.xnor) swap_binary(&l);
 }
 
 /*

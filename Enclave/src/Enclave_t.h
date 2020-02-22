@@ -50,7 +50,7 @@ typedef struct ecall_layer {
 
 void ecall_forward_dropout_layer(int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, float* rand, float* input);
 void ecall_normalize_array(float* array, size_t arr_len, size_t batch);
-void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, float* A, int lda, float* B, int ldb, float BETA, float* C, int ldc, int a_size, int b_size, int c_size);
+void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, float** A, int lda, float** B, int ldb, float BETA, float** C, int ldc);
 void ecall_activate_array(float* x, int n, ACTIVATION a);
 void ecall_avgpool_forward(int batch, int c, int fig_size, float* input, int input_len, float* output, int output_len);
 void ecall_forward_connected_layer(int TA, int TB, int M, int outputs, int K, int BN, int train, float* rolling_mean, float* rolling_variance, float* scales, float* x, float* x_norm, float* A, int lda, float* B, int ldb, float* C, int ldc, long int a_size, long int b_size, long int c_size, float* bias, float* mean, float* variance, ACTIVATION a);
@@ -64,6 +64,7 @@ void ecall_backward_cost_layer(size_t input_size, int scale, float* delta, float
 void ecall_backward_connected_layer(int bn, size_t out_c, size_t out_w, size_t out_h, int batch, int outputs, int inputs, ACTIVATION a, size_t a_len, size_t b_len, size_t c_len, size_t nd_len, float* output, float* input, float* delta, float* n_delta, float* weights, float* bias_updates, float* weight_updates, float* scale_updates, float* x, float* x_norm, float* mean, float* variance, float* mean_delta, float* mean_variance, float* scale);
 
 sgx_status_t SGX_CDECL ocall_print_string(const char* str);
+sgx_status_t SGX_CDECL gemm_segmentation(int TA, int TB, int M, int N, int K, float ALPHA, float** A, int lda, float** B, int ldb, float BETA, float** C, int ldc);
 
 #ifdef __cplusplus
 }

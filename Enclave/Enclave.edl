@@ -12,10 +12,10 @@ enclave {
         public void ecall_normalize_array([in, out, count =arr_len]float * array, size_t arr_len, size_t batch);
 
         public void ecall_gemm( int TA, int TB, int M, int N, int K, float ALPHA, 
-                                [in, count=a_size] float *A, int lda, 
-                                [in, count=b_size] float *B, int ldb,
+                                [in, count=1] float **A, int lda, 
+                                [in, count=1] float **B, int ldb,
                                 float BETA,
-                                [in, out, count=c_size] float *C, int ldc, int a_size, int b_size, int c_size);
+                                [in, count=1] float **C, int ldc);
         public void ecall_activate_array([in, out, count=n] float *x,int n,  ACTIVATION a);
         public void ecall_avgpool_forward(int batch, int c, int fig_size, 
                                             [in, count=input_len]float* input, int input_len, 
@@ -72,5 +72,10 @@ enclave {
     
     untrusted {
         void ocall_print_string([in, string] const char *str);
+        void gemm_segmentation (int TA, int TB, int M, int N, int K, float ALPHA, 
+            [in, count=1] float** A, int lda, 
+            [in, count=1] float** B, int ldb,
+            float BETA,
+            [in, count=1] float** C, int ldc);
     };
 };

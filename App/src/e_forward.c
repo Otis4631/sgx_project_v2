@@ -19,25 +19,25 @@ int e_forward_dropout_layer(layer l, network net) {
     }
 }
 
-int e_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
-        float *A, int lda, 
-        float *B, int ldb,
-        float BETA,
-        float *C, int ldc){
-            long a_size = lda * M;
-            long b_size = ldb * K;
-            long c_size = ldc * M;
-            double total = a_size + b_size + c_size;
-            #ifdef SGX_DEBUG
-            printf("Total memory: %.2f MB\n", total / (1024 * 1024));
-            #endif
-            sgx_status_t ret = ecall_gemm(EID, TA, TB, M, N, K, ALPHA, A, lda, B, ldb, BETA, C, ldc, a_size, b_size, c_size);
-            if(ret != SGX_SUCCESS) {
-                printf("file:App/gemm.c: ERROR when doing ecall_gemm!\n");
-                print_error_message(ret);
-                return -1;
-            }
-}
+// int e_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
+//         float *A, int lda, 
+//         float *B, int ldb,
+//         float BETA,
+//         float *C, int ldc){
+//             long a_size = lda * M;
+//             long b_size = ldb * K;
+//             long c_size = ldc * M;
+//             double total = a_size + b_size + c_size;
+//             #ifdef SGX_DEBUG
+//             printf("Total memory: %.2f MB\n", total / (1024 * 1024));
+//             #endif
+//             sgx_status_t ret = ecall_gemm(EID, TA, TB, M, N, K, ALPHA, A, lda, B, ldb, BETA, C, ldc, a_size, b_size, c_size);
+//             if(ret != SGX_SUCCESS) {
+//                 printf("file:App/gemm.c: ERROR when doing ecall_gemm!\n");
+//                 print_error_message(ret);
+//                 return -1;
+//             }
+// }
 
 int e_forward_convolutional_layer(layer l, network net)
 {
