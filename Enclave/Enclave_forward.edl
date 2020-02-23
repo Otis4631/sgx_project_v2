@@ -1,9 +1,4 @@
 enclave {
-    include "types.h"
-    from "Enclave_backward.edl" import *;
-    from "types.edl" import *;
-    from "Enclave_forward.edl" import *;
-
     trusted{
         public void ecall_forward_dropout_layer(int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, 
                                     [in, out, count=in_len]     float* rand,
@@ -70,8 +65,5 @@ enclave {
                                                 [in, out, count = input_size]   float *output, 
                                                 [in, out, count = 1]            float *cost);
     };
-    
-    untrusted {
-        void ocall_print_string([in, string] const char *str);
-    };
+    untrusted{};
 };

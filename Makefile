@@ -5,11 +5,14 @@ SGX_SDK ?= /root/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 0
+SGX_DNNL ?= 1
 
 #shell命令：getconf，查看LONG_BIT的位数
 ifeq ($(shell getconf LONG_BIT), 32)
 	SGX_ARCH := x86
 endif
+
+
 
 ifeq ($(SGX_ARCH), x86)
 	SGX_COMMON_FLAGS := -m32
@@ -169,6 +172,10 @@ Enclave_Link_Flags := $(Enclave_Security_Link_Flags) \
 	-Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
 	-Wl,--defsym,__ImageBase=0 -Wl,--gc-sections   \
 	-Wl,--version-script=Enclave/Enclave.lds
+
+ifeq ($(SGX_DNNL), 1)
+   Enclave_Link_Flags += -lsgx_pthread -lsgx_omp -lsgx_dnnl
+endif
 
 Enclave_Name := enclave.so
 Signed_Enclave_Name := enclave.signed.so

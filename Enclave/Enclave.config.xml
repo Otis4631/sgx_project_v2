@@ -7,7 +7,7 @@
 
 <!-- 128M -->
 <HeapMaxSize>0x8000000</HeapMaxSize>
-
+<ReservedMemExecutable>1</ReservedMemExecutable>
 <!-- 256M
 <HeapMaxSize>0x10000000</HeapMaxSize>  -->
 
