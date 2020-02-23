@@ -1,6 +1,11 @@
 
 
 #include "enclave.h"
+#ifdef DNNL
+    #include <string>
+    #include "dnnl.hpp"
+    using namespace dnnl;
+#endif
 extern "C" {
     #include "ecall_batchnorm_layer.h"
 }
@@ -132,6 +137,9 @@ void ecall_forward_maxpool_layer(int pad, int raw_h, int raw_w, int out_h, int o
     crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)output, sizeof(float) * out_h * out_w * c, batch);
 }
 
+
+
+
 void ecall_forward_convolutional_layer(int batch,int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, 
                                        float * weights, int weight_len,
                                        float * input, int in_len,
@@ -143,22 +151,21 @@ void ecall_forward_convolutional_layer(int batch,int ic, int h, int w, int size,
                                        float *mean, float *variance,
                                        ACTIVATION activation) {
 
-    int i;
-    int m = n_filters;                // 该层卷积核个数
-    int k = size * size * ic;  // 该层每个卷积核的参数元素个数
-    int n = out_h * out_w;        // 该层每个特征图的尺寸（元素个数）
-    int fig_size = h * ic * w;
+#ifdef DNNL
+    auto conv_src_md = memory::desc({N, IC, H, W}, memory::data_type::f32,
+            memory::format_tag::any // let convolution choose memory format
+    );
+#endif
     crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)input, sizeof(float) * fig_size, batch);
     float *a = weights;       // 所有卷积核（也即权重），元素个数为l.n*l.c*l.size*l.size，按行存储，共有l*n行，l.c*l.size*l.size列
     float *b = (float*)calloc(out_h * out_w * size * size * ic, sizeof(float));
     float *c = output;        // 存储一张输入图片（多通道）所有的输出特征图（输入图片是多通道的，输出图片也是多通道的，有多少个卷积核就有多少个通道，每个卷积核得到一张特征图即为一个通道）
+    
+    
     for(i = 0; i < batch; ++i){
-       
         im2col_cpu(input, ic, h, w, 
                 size, stride, pad, b);
-       // printf("conv input: %.4f\n", input[132]);
         gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
-       // printf("conv out: %.4f\n", c[5]);
 
         c += n * m;
         input += ic * h * w;

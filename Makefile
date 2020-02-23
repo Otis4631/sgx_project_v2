@@ -1,10 +1,10 @@
 ######## SGX SDK Settings fixed ########
 OPENMP ?= 0
 # ?= 如果没有被赋值过就赋予等号后面的值
-SGX_SDK ?= /root/sgxsdk
+SGX_SDK ?= /data/lz/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
-SGX_DEBUG ?= 0
+SGX_DEBUG ?= 1
 SGX_DNNL ?= 1
 
 #shell命令：getconf，查看LONG_BIT的位数
@@ -32,7 +32,6 @@ $(error Cannot set SGX_DEBUG and SGX_PRERELEASE at the same time!!)
 endif
 endif
 
-
 ifeq ($(SGX_DEBUG), 1)
 	SGX_COMMON_FLAGS += -O0 -g
 else
@@ -43,10 +42,13 @@ ifeq ($(OMP), 1)
 	SGX_COMMON_FLAGS += -fopenmp
 endif
 
+ifeq ($(SGX_DNNL), 1)
+	MACRO += -DDNNL
+endif
 
 #-Wall -Wextra：显示警告
 #
-SGX_COMMON_FLAGS +=  -Winit-self -Wpointer-arith -Wreturn-type \
+SGX_COMMON_FLAGS += $(MACRO) -Winit-self -Wpointer-arith -Wreturn-type \
                     -Waddress -Wsequence-point -Wformat-security \
                     -Wmissing-include-dirs -Wfloat-equal -Wundef -Wshadow \
                     -Wcast-align  -Wredundant-decls 
