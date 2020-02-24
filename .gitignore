@@ -38,3 +38,9 @@ application
 *.csv
 *.dataset
 *.data
+
+
+
+# Enclave
+Enclave_t.*
+Enclave_u.*

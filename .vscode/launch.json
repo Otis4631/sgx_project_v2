@@ -5,13 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
             "name": "gdb_app",
             "type": "cppdbg",
             "request": "launch",
@@ -49,11 +42,11 @@
         },
         {
             "name": "sgx-gdb",
-            "miDebuggerPath": "/root/sgxsdk/bin/sgx-gdb",
+            "miDebuggerPath": "/data/lz/sgxsdk/bin/sgx-gdb",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/application",
-            "args": ["train", "data/e_train.cfg", "cfg/e_mynet.cfg"],
+            "args": ["train", "data/train.cfg", "cfg/mynet.cfg"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -25,83 +25,32 @@ void gemm(int TA, int TB, int M, int N, int K, float ALPHA,
     gemm_cpu(TA,  TB,  M, N, K, ALPHA ,A, lda, B, ldb,BETA,C,ldc);
 }
 
-/*
-**  功能：被gemm_cpu()函数调用，实际完成C = ALPHA * A * B + C 矩阵计算，
-**       输出的C也是按行存储（所有行并成一行）
-**  输入： A,B,C   输入矩阵（一维数组格式）
-**        ALPHA   系数
-**        BETA    系数
-**        M       A,C的行数（不做转置）或者A'的行数（做转置），此处A未转置，故为A的行数
-**        N       B,C的列数（不做转置）或者B'的列数（做转置），此处B未转置，故为B的列数
-**        K       A的列数（不做转置）或者A'的列数（做转置），B的行数（不做转置）或者B'的行数（做转置），此处A,B均未转置，故为A的列数、B的行数
-**        lda     A的列数（不做转置）或者A'的行数（做转置），此处A未转置，故为A的列数
-**        ldb     B的列数（不做转置）或者B'的行数（做转置），此处B未转置，故为B的列数
-**        ldc     C的列数
-**  说明1：此函数是用C实现矩阵乘法运算，这部分代码应该是模仿的Caffe中的math_functions.cpp的代码
-**       参考博客：http://www.voidcn.com/blog/thy_2014/article/p-6149690.html
-**       更为详细的注释参见：gemm_cpu()函数的注释
-**  说明2：此函数在gemm_cpu()函数中调用，是其中四种情况之一，A,B都不进行转置
-**       函数名称gemm_nn()中的两个nn分别表示not transpose， not transpose
-*/
 void gemm_nn(int M, int N, int K, float ALPHA, 
         float *A, int lda, 
         float *B, int ldb,
         float *C, int ldc)
 {
-    int i,j,k;
-    // 大循环：遍历A的每一行，i表示A的第i行，也是C的第i行
     #pragma omp parallel for
-    for(i = 0; i < M; ++i){
-        // 中循环：遍历每一行的所有列，k表示A的第k列，同时表示B的第k行
-        for(k = 0; k < K; ++k){
-            // 先计算ALPHA * A（A中每个元素乘以ALPHA）
+    for(int i = 0; i < M; ++i){
+        for(int k = 0; k < K; ++k){
             register float A_PART = ALPHA*A[i*lda+k];
-            // 内循环：遍历B中所有列，每次大循环完毕，将计算得到A*B一行的结果
-            // j是B的第j列，也是C的第j列
-            for(j = 0; j < N; ++j){
-                // A中的第i行k列与B中的k行i列对应相乘，因为一个大循环要计算A*B整行之结果，
-                // 因此，这里用了一个内循环，并没有直接乘以B[k*ldb+i]
-                // 每个内循环完毕，将计算A*B整行的部分结果（A中第i行k列与B所有列第k行所有元素相乘的结果）
+            for(int j = 0; j < N; ++j){
                 C[i*ldc+j] += A_PART*B[k*ldb+j];
             }
         }
     }
 }
 
-/*
-**  功能：被gemm_cpu()函数调用，实际完成C = ALPHA * A * B' + C矩阵计算，
-**       输出的C也是按行存储（所有行并成一行）
-**  输入： A,B,C   输入矩阵（一维数组格式）
-**        ALPHA   系数
-**        BETA    系数
-**        M       A,C的行数（不做转置）或者A'的行数（做转置），此处A未转置，故为A的行数
-**        N       B,C的列数（不做转置）或者B'的列数（做转置），此处B转置，故为B’的列数
-**        K       A的列数（不做转置）或者A'的列数（做转置），B的行数（不做转置）或者B'的行数（做转置），此处A不转置，B转置，故为A的列数、B'的行数
-**        lda     A的列数（不做转置）或者A'的行数（做转置），此处A未转置，故为A的列数
-**        ldb     B的列数（不做转置）或者B'的行数（做转置），此处B未转置，故为B'的行数
-**        ldc     C的列数
-**  说明：此函数是用C实现矩阵乘法运算，这部分代码应该是模仿的Caffe中的math_functions.cpp的代码
-**       参考博客：http://www.voidcn.com/blog/thy_2014/article/p-6149690.html
-**       更为详细的注释参见：gemm_cpu()函数的注释
-**  说明2：此函数在gemm_cpu()函数中调用，是其中四种情况之一，A不进行转置,B转置
-**       函数名称gemm_nt()中的nt分别表示not transpose， transpose
-*/
 void gemm_nt(int M, int N, int K, float ALPHA, 
         float *A, int lda, 
         float *B, int ldb,
         float *C, int ldc)
 {
-    int i,j,k;
-    // 大循环：遍历A的每一行，i表示A的第i行，也是C的第i行
-        #pragma omp parallel for
-    for(i = 0; i < M; ++i){
-        // 
-        for(j = 0; j < N; ++j){
+    #pragma omp parallel for
+    for(int i = 0; i < M; ++i){
+        for(int j = 0; j < N; ++j){
             register float sum = 0;
-            // 内循环：每次内循环结束，将计算A中第i行与B中第j列相乘的结果，
-            // 也就是得到C[i][j]，因为C也一维化了，且按行存储，所以得到C[i*lda+j]
-            // k表示A的第几列，也表示
-            for(k = 0; k < K; ++k){
+            for(int k = 0; k < K; ++k){
                 sum += ALPHA*A[i*lda+k]*B[j*ldb + k];
             }
             C[i*ldc+j] += sum;
@@ -109,74 +58,39 @@ void gemm_nt(int M, int N, int K, float ALPHA,
     }
 }
 
-/*
-**  功能：矩阵计算，实际完成C = ALPHA * A' * B + BETA * C矩阵计算
-**  输入： A,B,C   输入矩阵（一维数组格式）
-**        ALPHA   系数
-**        BETA    系数
-**        M       A,C的行数（不做转置）或者A'的行数（做转置），此处A转置，故为A'的行数
-**        N       B,C的列数（不做转置）或者B'的列数（做转置），此处B未转置，故为B的列数
-**        K       A的列数（不做转置）或者A'的列数（做转置），B的行数（不做转置）或者B'的行数（做转置），此处A转置，B不转置，故为A'的列数、B的行数
-**        lda     A的列数（不做转置）或者A'的行数（做转置），此处A转置，故为A'的行数  
-**        ldb     B的列数（不做转置）或者B'的行数（做转置），此处B未转置，故为B的列数
-**        ldc     C的列数
-**  说明：此函数是用C实现矩阵乘法运算，这部分代码应该是模仿的Caffe中的math_functions.cpp的代码
-**       参考博客：http://www.voidcn.com/blog/thy_2014/article/p-6149690.html
-**       更为详细的注释参见：gemm_cpu()函数的注释
-**  说明2：此函数在gemm_cpu()函数中调用，是其中四种情况之一，A进行转置,B不转置
-**       函数名称gemm_tn()中的tn分别表示transpose， not transpose
-*/
 void gemm_tn(int M, int N, int K, float ALPHA, 
         float *A, int lda, 
         float *B, int ldb,
         float *C, int ldc)
 {
-    int i,j,k;
     #pragma omp parallel for
-    for(i = 0; i < M; ++i){
-        for(k = 0; k < K; ++k){
+    for(int i = 0; i < M; ++i){
+        for(int k = 0; k < K; ++k){
             register float A_PART = ALPHA*A[k*lda+i];
-            for(j = 0; j < N; ++j){
+            for(int j = 0; j < N; ++j){
                 C[i*ldc+j] += A_PART*B[k*ldb+j];
             }
         }
     }
 }
 
-/*
-**  功能：矩阵计算，实际完成C = ALPHA * A' * B' + BETA * C矩阵计算
-**  输入： A,B,C   输入矩阵（一维数组格式）
-**        ALPHA   系数
-**        BETA    系数
-**        M       A,C的行数（不做转置）或者A'的行数（做转置），此处A转置，故为A'的行数
-**        N       B,C的列数（不做转置）或者B'的列数（做转置），此处B转置，故为B'的列数
-**        K       A'的列数，B'的行数
-**        lda     A的列数（不做转置）或者A'的行数（做转置），此处A转置，故为A'的行数  
-**        ldb     B的列数（不做转置）或者B'的行数（做转置），此处B转置，故为B'的行数
-**        ldc     C的列数
-**  说明：此函数是用C实现矩阵乘法运算，这部分代码应该是模仿的Caffe中的math_functions.cpp的代码
-**       参考博客：http://www.voidcn.com/blog/thy_2014/article/p-6149690.html
-**       更为详细的注释参见：gemm_cpu()函数的注释
-**  说明2：此函数在gemm_cpu()函数中调用，是其中四种情况之一，A,B都进行转置
-**       函数名称gemm_tt()中的tt分别表示transpose， transpose
-*/
 void gemm_tt(int M, int N, int K, float ALPHA, 
         float *A, int lda, 
         float *B, int ldb,
         float *C, int ldc)
 {
-    int i,j,k;
     #pragma omp parallel for
-    for(i = 0; i < M; ++i){
-        for(j = 0; j < N; ++j){
+    for(int i = 0; i < M; ++i){
+        for(int j = 0; j < N; ++j){
             register float sum = 0;
-            for(k = 0; k < K; ++k){
+            for(int k = 0; k < K; ++k){
                 sum += ALPHA*A[i+k*lda]*B[k+j*ldb];
             }
             C[i*ldc+j] += sum;
         }
     }
 }
+
 
 /*
 **  功能：矩阵计算，完成C = ALPHA * A * B + BETA * C矩阵计算，最后的输出为C
@@ -227,11 +141,9 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
         float BETA,
         float *C, int ldc)
 {
-    //printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
-    int i, j;
-    // 先把BETA * C计算完了，并将结果存在C中，得到的C将为M行，N列（按行存储在一维数组C中）
-    for(i = 0; i < M; ++i){
-        for(j = 0; j < N; ++j){
+    #pragma omp parallel for
+    for(int i = 0; i < M; ++i){
+        for(int j = 0; j < N; ++j){
             C[i*ldc + j] *= BETA;
         }
     }

@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/App/src/include",
                 "${workspaceFolder}/Enclave/src/include",
-                "/root/sgxsdk/include"
+                "/root/sgxsdk/include",
+                "/data/lz/sgxsdk/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

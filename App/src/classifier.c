@@ -118,18 +118,19 @@ void train_csv(network* net, list* data_options) {
     pthread_t load_thread;
     args.d = &buffer;
     load_thread = load_data(args);
-    struct timeval t1,t2;
-    double timeuse;
+    struct timeval t0, t1, t2;
+    double timeuse, load_data_time;
     time_t tt;
     double ttused;
     double time_sum = 0;
     int epoch = (*net->seen) / N; // 当前处理的图片数 除以 总图片数
     while(get_current_batch(net) < net->max_batches){
+        gettimeofday(&t0, NULL);
         pthread_join(load_thread, 0);
         train = buffer;
         load_thread = load_data(args);
-        //printf("Loaded: %lf seconds\n", sec(clock()-time));
         gettimeofday(&t1, NULL);
+        load_data_time = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec)/1000000.0;
         tt = clock();
         float loss = 0;
         loss = train_network(net, train);
@@ -137,8 +138,8 @@ void train_csv(network* net, list* data_options) {
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
         ttused = sec(clock() - tt);
         time_sum += timeuse;
-        printf("Epoch: %d, Batch: %d, Loss: %g, Learning Rate: %g, Time used %.3fs/%.3fs, Image Processed: %d\n",
-        epoch, get_current_batch(net), loss, get_current_rate(net), timeuse, ttused,  *net->seen);
+        printf("Epoch: %d, Batch: %d, Loss: %g, Learning Rate: %g, Time used of Data Loading %.3fs, Time used of Training %.3fs/%.3fs, Image Processed: %d\n",
+        epoch, get_current_batch(net), loss, get_current_rate(net), load_data_time, timeuse, ttused,  *net->seen);
         free_data(train);
         if(*net->seen / N > epoch){
             epoch = *net->seen / N;

@@ -179,15 +179,7 @@ void ecall_forward_convolutional_layer(int batch,int ic, int h, int w, int size,
     for(i = 0; i < batch; ++i){
         im2col_cpu(input, ic, h, w, 
                 size, stride, pad, b);
-<<<<<<< HEAD
         gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
-=======
-       // printf("conv input: %.4f\n", input[132]);
-        //gemm_segmentation(0,0,m,n,k,1,&a,k,&b,n,1,&c,n);
-        gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
-
-       // printf("conv out: %.4f\n", c[5]);
->>>>>>> master
 
         c += n * m;
         input += ic * h * w;

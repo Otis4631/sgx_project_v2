@@ -1,10 +1,10 @@
 ######## SGX SDK Settings fixed ########
 OPENMP ?= 1
-SGX_SDK ?= /root/sgxsdk
+SGX_SDK ?= /data/lz/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
-SGX_DEBUG ?= 1
-SGX_DNNL ?= 0
+SGX_DEBUG ?= 0
+SGX_DNNL ?= 1
 ########                        ########
 
 
@@ -38,18 +38,15 @@ else
 	SGX_COMMON_FLAGS += -Ofast
 endif
 
-ifeq ($(OMP), 1)
+ifeq ($(OPENMP), 1)
 	SGX_COMMON_FLAGS += -fopenmp
 	MACRO += -DOPENMP
 endif
 
-
 ifeq ($(SGX_DNNL), 1)
 	MACRO += -DDNNL
 endif
-ifeq ($(OPENMP), 1)
-SGX_COMMON_FLAGS += -fopenmp 
-endif
+
 #-Wall -Wextra：显示警告
 #
 SGX_COMMON_FLAGS += $(MACRO) -Winit-self -Wpointer-arith -Wreturn-type \
