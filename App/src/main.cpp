@@ -70,11 +70,7 @@ void encrypt() {
 }
 
 int main(int argc, char ** argv){
-<<<<<<< HEAD
     if(argc < 3){
-=======
-    if(argc < 4){
->>>>>>> master
         printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] ", argv[0]);
         return -1;
     }
@@ -82,10 +78,6 @@ int main(int argc, char ** argv){
     #ifdef OPENMP
         printf("OPENMP!\n");
     #endif
-<<<<<<< HEAD
-=======
-    if(argc)
->>>>>>> master
     time_t t = clock();
     if(initialize_enclave(NULL) == 0)
         printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
