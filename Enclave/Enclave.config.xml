@@ -4,22 +4,12 @@
   <!-- 256K -->
   <StackMaxSize>0x80000</StackMaxSize>   
 
-
 <!-- 128M -->
-<HeapMaxSize>0x8000000</HeapMaxSize>
-<ReservedMemExecutable>1</ReservedMemExecutable>
-<!-- 256M
-<HeapMaxSize>0x10000000</HeapMaxSize>  -->
-
-<!-- 1G 1s
-<HeapMaxSize>0x40000000</HeapMaxSize>  -->
-
-<!-- 10G  15s
-<HeapMaxSize>0x280000000</HeapMaxSize>  -->
-
+  <HeapMaxSize>0x8000000</HeapMaxSize>
+  <ReservedMemMaxSize>0x80000</ReservedMemMaxSize>
+  <ReservedMemExecutable>1</ReservedMemExecutable>
   <TCSNum>10</TCSNum>
-  <TCSPolicy>0</TCSPolicy>
-  <!-- Recommend changing 'DisableDebug' to 1 to make the enclave undebuggable for enclave release -->
+  <TCSPolicy>1</TCSPolicy>
   <DisableDebug>0</DisableDebug>
   <MiscSelect>0</MiscSelect>
   <MiscMask>0xFFFFFFFF</MiscMask>

@@ -1,19 +1,16 @@
 ######## SGX SDK Settings fixed ########
-OPENMP ?= 0
-# ?= 如果没有被赋值过就赋予等号后面的值
-SGX_SDK ?= /data/lz/sgxsdk
+OPENMP ?= 1
+SGX_SDK ?= /root/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 1
-SGX_DNNL ?= 1
+SGX_DNNL ?= 0
+########                        ########
 
-#shell命令：getconf，查看LONG_BIT的位数
+
 ifeq ($(shell getconf LONG_BIT), 32)
 	SGX_ARCH := x86
 endif
-
-
-
 ifeq ($(SGX_ARCH), x86)
 	SGX_COMMON_FLAGS := -m32
 	SGX_LIBRARY_PATH := $(SGX_SDK)/lib
@@ -38,20 +35,20 @@ else
 	SGX_COMMON_FLAGS += -Ofast
 endif
 
-ifeq ($(OMP), 1)
-	SGX_COMMON_FLAGS += -fopenmp
-endif
+
 
 ifeq ($(SGX_DNNL), 1)
 	MACRO += -DDNNL
 endif
-
+ifeq ($(OPENMP), 1)
+SGX_COMMON_FLAGS += -fopenmp 
+endif
 #-Wall -Wextra：显示警告
 #
 SGX_COMMON_FLAGS += $(MACRO) -Winit-self -Wpointer-arith -Wreturn-type \
                     -Waddress -Wsequence-point -Wformat-security \
                     -Wmissing-include-dirs -Wfloat-equal -Wundef -Wshadow \
-                    -Wcast-align  -Wredundant-decls 
+                    -Wcast-align  -Wredundant-decls  
 SGX_COMMON_CFLAGS := $(SGX_COMMON_FLAGS) -Wjump-misses-init -Wstrict-prototypes
 SGX_COMMON_CXXFLAGS := $(SGX_COMMON_FLAGS) -Wnon-virtual-dtor -std=c++11
 
@@ -89,15 +86,6 @@ App_Include_Paths := -I${APP_SRCDIR} -I${APP_SRCDIR}/include -I$(SGX_SDK)/includ
 #-fPIC 产生与位置无关的代码
 App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w
 
-ifeq ($(OPENMP), 1)
-App_C_Flags += -fopenmp 
-endif
-
-
-# Three configuration modes - Debug, prerelease, release
-#   Debug - Macro DEBUG enabled.
-#   Prerelease - Macro NDEBUG and EDEBUG enabled.
-#   Release - Macro NDEBUG enabled.
 ifeq ($(SGX_DEBUG), 1)
         App_C_Flags += -DDEBUG -UNDEBUG -UEDEBUG
 else ifeq ($(SGX_PRERELEASE), 1)
@@ -107,11 +95,11 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags)
-App_Link_Flags := -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) -lpthread 
-ifeq ($(OPENMP), 1)
-App_Link_Flags += -lgomp 
-endif
+App_Link_Flags := -lpthread  -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) 
 
+ifeq ($(OPENMP), 1)
+	App_Link_Flags += -lgomp 
+endif
 
 ifneq ($(SGX_MODE), HW)
 	App_Link_Flags += -lsgx_uae_service_sim
@@ -166,18 +154,25 @@ Enclave_Security_Link_Flags := -Wl,-z,relro,-z,now,-z,noexecstack
 #       Use `--start-group' and `--end-group' to link these libraries.
 # Do NOT move the libraries linked with `--start-group' and `--end-group' within `--whole-archive' and `--no-whole-archive' options.
 # Otherwise, you may get some undesirable errors.
+
+Enclave_Static_Library_Group = -lsgx_tstdc -lsgx_tcxx -lsgx_pthread -l$(Switchless_Library_Name) -l$(Crypto_Library_Name) -l$(Service_Library_Name)  
+ifeq ($(SGX_DNNL), 1)
+	Enclave_Static_Library_Group += -lsgx_omp -lsgx_dnnl 
+else ifeq ($(OPENMP), 1)
+	Enclave_Static_Library_Group += -lsgx_omp
+endif
+
 Enclave_Link_Flags := $(Enclave_Security_Link_Flags) \
     -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
 	-Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
-	-Wl,--start-group -lsgx_tstdc -lsgx_tcxx -l$(Switchless_Library_Name) -l$(Crypto_Library_Name) -l$(Service_Library_Name) -Wl,--end-group \
+	-Wl,--start-group $(Enclave_Static_Library_Group) -Wl,--end-group \
 	-Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
 	-Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
 	-Wl,--defsym,__ImageBase=0 -Wl,--gc-sections   \
 	-Wl,--version-script=Enclave/Enclave.lds
 
-ifeq ($(SGX_DNNL), 1)
-   Enclave_Link_Flags += -lsgx_pthread -lsgx_omp -lsgx_dnnl
-endif
+
+
 
 Enclave_Name := enclave.so
 Signed_Enclave_Name := enclave.signed.so
@@ -286,7 +281,7 @@ $(Enclave_Name): $(Enclave_Objects)  ${ENCLAVE_OBJDIR}Enclave_t.o
 	@$(CXX) $^ -o $@ $(Enclave_Link_Flags)
 	@echo "LINK =>  $@"
 
-$(Signed_Enclave_Name): $(Enclave_Name)
+$(Signed_Enclave_Name): $(Enclave_Name) $(Enclave_Config_File) Makefile
 	@$(SGX_ENCLAVE_SIGNER) sign -key Enclave/Enclave_private.pem -enclave $(Enclave_Name) -out $@ -config $(Enclave_Config_File)
 	@echo "SIGN =>  $@"
 

@@ -70,24 +70,26 @@ void encrypt() {
 }
 
 int main(int argc, char ** argv){
-    if(argc < 2){
-        printf("No args\n");
+    if(argc < 3){
+        printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] ", argv[0]);
         return -1;
     }
     /* Configuration for Switchless SGX */
-    sgx_uswitchless_config_t us_config = SGX_USWITCHLESS_CONFIG_INITIALIZER;
-    us_config.num_uworkers = 4;
-    us_config.num_tworkers = 4;
+    #ifdef OPENMP
+        printf("OPENMP!\n");
+    #endif
     time_t t = clock();
-    if(initialize_enclave(&us_config) == 0)
+    if(initialize_enclave(NULL) == 0)
         printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
     else
         return -1;
-   // predict("data/conv_test.cfg", "cfg/mynet.cfg", NULL);
-    if(0 == strcmp(argv[1], "t"))
-        train(argv[2], argv[3], NULL);
-    else if(0 == strcmp(argv[1], "e"))
-        encrypt();
+    char * weights_path = NULL;
+    if(argc > 4)
+        weights_path = argv[4];
+    if(0 == strcmp(argv[1], "train"))
+        train(argv[2], argv[3], weights_path);
+    else if(0 == strcmp(argv[1], "predict"))
+        predict(argv[2], argv[3], weights_path);
     else
     {
         printf("Unknown args\n");

@@ -53,7 +53,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/application",
-            "args": ["t", "data/train.cfg", "cfg/mynet.cfg"],
+            "args": ["train", "data/e_train.cfg", "cfg/e_mynet.cfg"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

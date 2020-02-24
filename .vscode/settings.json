@@ -86,5 +86,6 @@
         "dropout_layer.h": "c"
     },
     "git.ignoreLimitWarning": true,
-    "python.pythonPath": "/usr/bin/python"
+    "python.pythonPath": "/usr/bin/python",
+    "C_Cpp.errorSquiggles": "Enabled"
 }
