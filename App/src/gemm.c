@@ -6,6 +6,53 @@
 #include <math.h>
 #include "Enclave_u.h"
 #include "sgx_err.h"
+#include "sys/sysinfo.h"
+
+typedef struct gemm_thread_data {
+            int TA,  TB,  M,  N,  K;
+            float ALPHA; 
+            float *A; int lda;
+            float *B; int ldb;
+            float BETA;
+            float *C; int ldc;
+}gemm_thread_data;
+extern sgx_enclave_id_t EID;
+
+void thread_gemm(void* ptr) {
+    gemm_thread_data* data = (gemm_thread_data*)ptr;
+    sgx_status_t ret = ecall_gemm(EID, data->TA, data->TB, data->M, data->N, data->K, data->ALPHA,
+                &data->A, data->lda, &data->B, data->ldb, data->BETA, &data->C, data->ldc);
+    if(ret != SGX_SUCCESS) {
+        print_error_message(ret);
+        return -1;
+    }
+
+}
+
+void gemm_segmentation(int TA, int TB, int M, int N, int K, float ALPHA, 
+            float **A, int lda, 
+            float **B, int ldb,
+            float BETA,
+            float **C, int ldc) 
+{
+    int num_cpu = get_nprocs_conf();
+    int offset_sum = 0;
+    pthread_t *threads = calloc(num_cpu, sizeof(pthread_t));
+    float *a, *b, *c;
+    a = *A, b = *B, c = *C;
+    for(int i = 0; i < num_cpu; i++) {
+        pthread_t thread;
+        int batch_offset = (i + 1) * M / num_cpu - i * M / num_cpu;
+        gemm_thread_data args = {TA, TB, batch_offset, N, K, ALPHA, a + (offset_sum * K), lda, b, ldb, BETA, c, ldc};
+
+        offset_sum += batch_offset;
+        if(pthread_create(&thread, 0, thread_gemm, (void *)&args)) error("Thread creation failed");
+        threads[i] = thread;
+    }
+        for(int i = 0; i < num_cpu; ++i){
+            pthread_join(threads[i], 0);
+    }
+}
 
 
     

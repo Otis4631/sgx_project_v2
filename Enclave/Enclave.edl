@@ -7,10 +7,83 @@ enclave {
     from "sgx_tstdc.edl" import *;
 
     trusted{
+<<<<<<< HEAD
        
           };
+=======
+        public void ecall_forward_dropout_layer(int train, size_t batch, size_t inputs, float probability, float scale, size_t in_len, 
+                                    [in, out, count=in_len]     float* rand,
+                                    [in, out, count=in_len]     float* input);
+
+
+        public void ecall_normalize_array([in, out, count =arr_len]float * array, size_t arr_len, size_t batch);
+
+        public void ecall_gemm( int TA, int TB, int M, int N, int K, float ALPHA, 
+                                [in, count=1] float **A, int lda, 
+                                [in, count=1] float **B, int ldb,
+                                float BETA,
+                                [in, count=1] float **C, int ldc);
+        public void ecall_activate_array([in, out, count=n] float *x,int n,  ACTIVATION a);
+        public void ecall_avgpool_forward(int batch, int c, int fig_size, 
+                                            [in, count=input_len]float* input, int input_len, 
+                                            [in,out,count=output_len]float* output, int output_len);
+        
+        public void ecall_forward_connected_layer(int TA, int TB, int M, int outputs, int K, int BN, int train,
+                                                    [in, out, count=outputs]   float *rolling_mean,
+                                                    [in, out, count=outputs]   float *rolling_variance,
+                                                    [in, out, count=outputs]   float *scales,
+                                                    [in, out, count=c_size]    float *x,                                                    
+                                                    [in, out, count=c_size]    float *x_norm,
+                                                    [in, count=a_size]         float *A, int lda, 
+                                                    [in, count=b_size]         float *B, int ldb,
+                                                    [in, out, count=c_size]    float *C, int ldc, 
+                                                    long a_size, long b_size, long c_size,
+                                                    [in, count=outputs]         float* bias,
+                                                    [in, out, count=outputs]    float* mean,
+                                                    [in, out, count=outputs]    float* variance,
+                                                    ACTIVATION a);
+
+                
+
+        public void ecall_forward_maxpool_layer(int pad, int h,int w, int out_h, int out_w, int c, int batch, int size, int stride, 
+                        [in, count=input_len] float *input, int input_len,
+                        [in,out,count=out_len] float *output, int out_len,
+                        [in,out,count=out_len] int* indcies);
+
+        public void ecall_forward_convolutional_layer(int batch,int ic, int h, int w, int size, int stride, int pad, int n_filters, int out_h, int out_w, 
+                                       [in, count = weight_len]     float * weights, int weight_len,
+                                       [in, count = in_len]         float * input, int in_len,
+                                       [in, out, count = out_len]   float * output, int out_len,
+                                       [in, count = bias_len]       float * biases, int bias_len,
+
+                                       int batch_normalize, int train, int outputs,
+                                       [in, out, count=n_filters]     float *rolling_mean, 
+                                       [in, out, count=n_filters]     float *rolling_variance, 
+                                       [in, out, count=n_filters]     float *scales, 
+                                       [in, out, count=out_len]       float *x, 
+                                       [in, out, count=out_len]       float *x_norm,
+                                       [in, out, count=n_filters]     float *mean, 
+                                       [in, out, count=n_filters]     float *variance,
+                                       ACTIVATION activation);
+
+        public void ecall_rc4_crypt([in, count=key_len] unsigned char *key, unsigned long key_len, [in,out, count=Len]unsigned char *Data, unsigned long Len);
+
+
+        public void ecall_forward_cost_layer(COST_TYPE cost_type, int batch, int in_len,
+                                                [in, count = input_size]        float *input, size_t input_size, 
+                                                [in, count = input_size]        float *truth,
+                                                [in, out, count = input_size]   float *delta, 
+                                                [in, out, count = input_size]   float *output, 
+                                                [in, out, count = 1]            float *cost);
+    };
+>>>>>>> master
     
     untrusted {
         void ocall_print_string([in, string] const char *str);
+        void gemm_segmentation (int TA, int TB, int M, int N, int K, float ALPHA, 
+            [in, count=1] float** A, int lda, 
+            [in, count=1] float** B, int ldb,
+            float BETA,
+            [in, count=1] float** C, int ldc);
     };
 };

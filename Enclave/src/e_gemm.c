@@ -1,17 +1,28 @@
 #include <stdlib.h>
 #include <math.h>
 #include "e_gemm.h"
+#include "Enclave_t.h"
+
 
 /*
 ** 该函数只是调用了gemm_cpu()函数，并且将参数原封不动的传给gemm_cpu()
 */
+void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
+        float **A, int lda, 
+        float **B, int ldb,
+        float BETA,
+        float **C, int ldc)
+{
+    gemm_cpu(TA,  TB,  M, N, K, ALPHA , *A, lda, *B, ldb,BETA,*C,ldc);
+}
+
 void gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
         float *A, int lda, 
         float *B, int ldb,
         float BETA,
         float *C, int ldc)
 {
-    gemm_cpu( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
+    gemm_cpu(TA,  TB,  M, N, K, ALPHA ,A, lda, B, ldb,BETA,C,ldc);
 }
 
 /*
@@ -41,7 +52,6 @@ void gemm_nn(int M, int N, int K, float ALPHA,
     // 大循环：遍历A的每一行，i表示A的第i行，也是C的第i行
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
-
         // 中循环：遍历每一行的所有列，k表示A的第k列，同时表示B的第k行
         for(k = 0; k < K; ++k){
             // 先计算ALPHA * A（A中每个元素乘以ALPHA）

@@ -8,17 +8,17 @@ extern "C" {
 #include "types.h"
 
 
-void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
-        float *A, int lda, 
-        float *B, int ldb,
-        float BETA,
-        float *C, int ldc, int a_size, int b_size, int c_size) {
+// void ecall_gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
+//         float *A, int lda, 
+//         float *B, int ldb,
+//         float BETA,
+//         float *C, int ldc, int a_size, int b_size, int c_size) {
 
-            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)B, 4, b_size);
-            //rc4_crypt("lizheng", 7, C, c_size);
-            gemm(TA,  TB,  M, N, K, ALPHA, A, lda, B, ldb, BETA, C, ldc);
-            crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)C, 4, c_size);
-}
+//             crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)B, 4, b_size);
+//             //rc4_crypt("lizheng", 7, C, c_size);
+//             gemm(TA,  TB,  M, N, K, ALPHA, A, lda, B, ldb, BETA, C, ldc);
+//             crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)C, 4, c_size);
+// }
 
 void ecall_avgpool_forward(int batch, int c, int fig_size, float* input, int input_len, float* output, int output_len) {
         crypt_aux((unsigned char*)pass, pass_len, (unsigned char*)input, sizeof(float), input_len);
@@ -179,7 +179,15 @@ void ecall_forward_convolutional_layer(int batch,int ic, int h, int w, int size,
     for(i = 0; i < batch; ++i){
         im2col_cpu(input, ic, h, w, 
                 size, stride, pad, b);
+<<<<<<< HEAD
         gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
+=======
+       // printf("conv input: %.4f\n", input[132]);
+        //gemm_segmentation(0,0,m,n,k,1,&a,k,&b,n,1,&c,n);
+        gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
+
+       // printf("conv out: %.4f\n", c[5]);
+>>>>>>> master
 
         c += n * m;
         input += ic * h * w;
