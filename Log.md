@@ -20,3 +20,8 @@ Condition|Time| Space |
 Plain OpenMP|0.528s|/|
 enclave(DNNL) without cipher| 0.327s| N/A|
 enclave with rc4 cipher| 3.9s| N/A|
+
+
+batch size: 3072
+    openMP(num_cpu / 2): 17.9s
+    single thread: 20.5s

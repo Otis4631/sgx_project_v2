@@ -3,7 +3,7 @@ OPENMP ?= 1
 SGX_SDK ?= /data/lz/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
-SGX_DEBUG ?= 0
+SGX_DEBUG ?= 1
 SGX_DNNL ?= 1
 ########                        ########
 
@@ -128,10 +128,18 @@ ENCLAVE_OBJDIR := Enclave/obj/
 Enclave_Cpp_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}*.cpp))
 Enclave_C_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}*.c))
 
+
 Enclave_Cpp_Objects := $(Enclave_Cpp_Files:.cpp=.o)
 Enclave_C_Objects := $(Enclave_C_Files:.c=.o)
 
 Enclave_Objects := ${Enclave_Cpp_Objects} ${Enclave_C_Objects}
+
+ifneq ($(SGX_DNNL), 1)
+Enclave_DNNL_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}dnnl_*.*))
+$(warning $(Enclave_DNNL_Files))
+endif 
+
+
 Enclave_Objects := $(addprefix ${ENCLAVE_OBJDIR}, ${Enclave_Objects})
 
 Crypto_Library_Name := sgx_tcrypto

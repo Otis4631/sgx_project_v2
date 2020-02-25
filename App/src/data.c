@@ -104,6 +104,7 @@ matrix load_image_paths_gray(char **paths, int n, int w, int h)
     return X;
 }
 data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt, int normalize) {
+    //TODO: write a real data random reader
     long* indices = calloc(n, sizeof(long));
     matrix x, y;
     data d = {0};
@@ -141,8 +142,16 @@ data load_data_csv(FILE* csv_file, int n, int m, size_t fig_size, int encrypt, i
         float* tmp;
         if(encrypt)
             tmp = read_from_base64(line, NULL);
-        else
-            tmp = parse_fields(line, fig_size + 1, NULL);
+        else 
+        {
+            tmp = (float*)calloc(fig_size + 1, sizeof(float));
+            if(parse_fields_nan_check(line, fig_size + 1, tmp) != 0) {
+                printf("invaild data in CSV, line %d : %s\n", index, line);
+                free(tmp);
+                i--;
+                continue;
+            }
+        }
         float* foo_x = calloc(fig_size, sizeof(float));
         float* foo_y = calloc(1, sizeof(float));
         memcpy(foo_x, tmp + 1, fig_size*sizeof(float));

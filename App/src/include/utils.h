@@ -37,6 +37,8 @@ list *parse_csv_line(char *line);
 char *copy_string(char *s);
 int count_fields(char *line);
 float *parse_fields(char *line, int n, float* out);
+int parse_fields_nan_check(char *line, int n, float* field);
+
 void normalize_array(float *a, int n);
 void scale_array(float *a, int n, float s);
 void translate_array(float *a, int n, float s);

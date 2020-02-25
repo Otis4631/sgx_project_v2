@@ -534,6 +534,31 @@ float *parse_fields(char *line, int n, float* out)
     return field;
 }
 
+int parse_fields_nan_check(char *line, int n, float* field)
+{
+    // nan value in data: reutrn 1
+    char *c, *p, *end;
+    int count = 0;
+    int done = 0;
+    for(c = line, p = line; !done; ++c){
+        done = (*c == '\0');
+        if(*c == ',' || done){
+            *c = '\0';
+            field[count] = strtod(p, &end);
+            if(p == c) {
+                field[count] = nan("");
+                return 1;
+            }
+            if(end != c && (end != c-1 || *end != '\r')) {
+                field[count] = nan("");
+                return 1;
+                } //DOS file formats!
+            p = c+1;
+            ++count;
+        }
+    }
+    return 0;
+}
 
 
 

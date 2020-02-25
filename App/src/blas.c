@@ -108,7 +108,7 @@ void mean_cpu(float *x, int batch, int filters, int spatial, float *mean)
 {
     // scale即求均值中的分母项
     float scale = 1./(batch * spatial);
-    int i,j,k;
+    size_t i,j,k;
     // 外层循环次数为filters，也即mean的维度，每次循环将得到一个平均值
     for(i = 0; i < filters; ++i){
         mean[i] = 0;
@@ -117,8 +117,10 @@ void mean_cpu(float *x, int batch, int filters, int spatial, float *mean)
             // 内层循环即叠加一张输出特征图的所有像素值
             for(k = 0; k < spatial; ++k){
                 // 如果理解了上面的注释，下面的偏移是很显然的
-                int index = j*filters*spatial + i*spatial + k;
+                size_t index = j*filters*spatial + i*spatial + k;
                 mean[i] += x[index];
+                if(isnan(x[index]))
+                    printf("%d\n", index);
             }
         }
         // 除以该均值所涉及元素的总个数，得到平均值

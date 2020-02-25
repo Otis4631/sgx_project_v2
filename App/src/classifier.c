@@ -117,7 +117,6 @@ void train_csv(network* net, list* data_options) {
     data buffer;
     pthread_t load_thread;
     args.d = &buffer;
-    load_thread = load_data(args);
     struct timeval t0, t1, t2;
     double timeuse, load_data_time;
     time_t tt;
@@ -125,10 +124,10 @@ void train_csv(network* net, list* data_options) {
     double time_sum = 0;
     int epoch = (*net->seen) / N; // 当前处理的图片数 除以 总图片数
     while(get_current_batch(net) < net->max_batches){
+        load_thread = load_data(args);
         gettimeofday(&t0, NULL);
         pthread_join(load_thread, 0);
         train = buffer;
-        load_thread = load_data(args);
         gettimeofday(&t1, NULL);
         load_data_time = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec)/1000000.0;
         tt = clock();

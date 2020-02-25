@@ -6,6 +6,7 @@
 #include "Enclave_u.h"
 #include "sgx_err.h"
 #include "sys/sysinfo.h"
+int num_cpu; 
 
 typedef struct gemm_thread_data {
             int TA,  TB,  M,  N,  K;
@@ -34,7 +35,7 @@ void gemm_segmentation(int TA, int TB, int M, int N, int K, float ALPHA,
             float BETA,
             float **C, int ldc) 
 {
-    int num_cpu = get_nprocs_conf();
+    num_cpu = get_nprocs_conf();
     int offset_sum = 0;
     pthread_t *threads = calloc(num_cpu, sizeof(pthread_t));
     float *a, *b, *c;
@@ -120,6 +121,7 @@ void gemm(int TA, int TB, int M, int N, int K, float ALPHA,
         float BETA,
         float *C, int ldc)
 {
+   num_cpu = get_nprocs_conf();
     gemm_cpu( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
 }
 
