@@ -63,7 +63,7 @@ ifneq ($(SGX_MODE), HW)
 else
 	Urts_Library_Name := sgx_urts
 endif
-
+APPDIR := App/
 APP_SRCDIR := App/src/
 APP_OBJDIR := App/obj/
 
@@ -72,7 +72,7 @@ wtf := $(notdir $(wildcard App/src/*.cpp))
 #wtf := $(notdir ${wtf})
 
 App_Cpp_Files := $(notdir $(wildcard App/src/*.cpp))
-App_Header := $(wildcard ${APP_SRCDIR}include/*.h) Makefile
+App_Header := $(wildcard ${APPDIR}include/*.h) Makefile
 App_C_Files := $(notdir $(wildcard ${APP_SRCDIR}*.c))
 
 App_Cpp_Objects := $(App_Cpp_Files:.cpp=.o)
@@ -85,7 +85,7 @@ App_Objects := $(addprefix ${APP_OBJDIR}, ${App_Objects})
 
 
 
-App_Include_Paths := -I${APP_SRCDIR} -I${APP_SRCDIR}/include -I$(SGX_SDK)/include 
+App_Include_Paths := -I${APP_SRCDIR} -I${APPDIR}/include -I$(SGX_SDK)/include 
 
 #-fPIC 产生与位置无关的代码
 App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w
@@ -145,7 +145,7 @@ Enclave_Objects := $(addprefix ${ENCLAVE_OBJDIR}, ${Enclave_Objects})
 Crypto_Library_Name := sgx_tcrypto
 Switchless_Library_Name := sgx_tswitchless
 
-Enclave_Include_Paths :=  -IEnclave/src -IEnclave/src/include  -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx
+Enclave_Include_Paths :=  -IEnclave/src -IEnclave/include  -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx
 
 Enclave_C_Flags := $(Enclave_Include_Paths) -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -DSGX
 CC_BELOW_4_9 := $(shell expr "`$(CC) -dumpversion`" \< "4.9")
@@ -303,4 +303,4 @@ clean:
 	@rm -rf .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Objects) ${APP_SRCDIR}Enclave_u.* $(Enclave_Objects) ${ENCLAVE_SRCDIR}Enclave_t.*
 	@rm -rf build/*
 test:
-	@echo ${App_Objects}
+	@echo ${App_Objects}                
