@@ -1,4 +1,12 @@
 #include "enclave.h"
+#include <sgx_tcrypto.h>
+
+
+
+
+void gen_random_bytes(size_t bytes_len, vector<uint8_t> &tmp) {
+    sgx_read_rand(tmp.data(), bytes_len);
+}
 
 int printf(const char* fmt, ...)
 {

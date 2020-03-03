@@ -4,7 +4,7 @@
 #include <time.h>
 #include <iostream>
 #include <sgx_uswitchless.h>
-
+#include "sgx_err.h"
 #include "classifier.h"
 #include "encrypt_file.h"
 
@@ -24,7 +24,6 @@ extern "C"{
     extern void predict(char *datacfg, char *cfgfile, char *weightfile);
     extern void train(char *datacfg, char *cfgfile, char *weightfile);
     #include "base64.h"
-    #include "sgx_err.h"
 }
 
 
@@ -69,30 +68,30 @@ void encrypt() {
     decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
 }
 
-int main(int argc, char ** argv){
-    if(argc < 3){
-        printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] ", argv[0]);
-        return -1;
-    }
-    /* Configuration for Switchless SGX */
-    #ifdef OPENMP
-        printf("OPENMP!\n");
-    #endif
-    time_t t = clock();
-    if(initialize_enclave(NULL) == 0)
-        printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
-    else
-        return -1;
-    char * weights_path = NULL;
-    if(argc > 4)
-        weights_path = argv[4];
-    if(0 == strcmp(argv[1], "train"))
-        train(argv[2], argv[3], weights_path);
-    else if(0 == strcmp(argv[1], "predict"))
-        predict(argv[2], argv[3], weights_path);
-    else
-    {
-        printf("Unknown args\n");
-    }
-    destory_enclave();
-}
+// int main(int argc, char ** argv){
+//     if(argc < 3){
+//         printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] ", argv[0]);
+//         return -1;
+//     }
+//     /* Configuration for Switchless SGX */
+//     #ifdef OPENMP
+//         printf("OPENMP!\n");
+//     #endif
+//     time_t t = clock();
+//     if(initialize_enclave(NULL) == 0)
+//         printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
+//     else
+//         return -1;
+//     char * weights_path = NULL;
+//     if(argc > 4)
+//         weights_path = argv[4];
+//     if(0 == strcmp(argv[1], "train"))
+//         train(argv[2], argv[3], weights_path);
+//     else if(0 == strcmp(argv[1], "predict"))
+//         predict(argv[2], argv[3], weights_path);
+//     else
+//     {
+//         printf("Unknown args\n");
+//     }
+//     destory_enclave();
+// }

@@ -1,12 +1,6 @@
 #pragma once
 #include <sgx_error.h>
 #include "sgx_err.h"
-#include <stdio.h>
-typedef unsigned long size_t;
-#ifdef __cplusplus
-extern "C" {
-
-#endif
 typedef struct _sgx_errlist_t {
     sgx_status_t err;
     const char * msg;
@@ -60,11 +54,7 @@ void print_error_message(sgx_status_t ret)
         printf("Error: Unexpected error occurred.\n");
     return;
 }
- #ifdef __cplusplus
-}
-#endif
-
-
+ 
 #ifdef __cplusplus
 #include <functional>
 #include <sgx_tcrypto.h>

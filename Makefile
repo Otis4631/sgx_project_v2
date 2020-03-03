@@ -52,7 +52,7 @@ endif
 SGX_COMMON_FLAGS += $(MACRO) -Winit-self -Wpointer-arith -Wreturn-type \
                     -Waddress -Wsequence-point -Wformat-security \
                     -Wmissing-include-dirs -Wfloat-equal -Wundef -Wshadow \
-                    -Wcast-align  -Wredundant-decls  
+                    -Wcast-align  -Wredundant-decls  -lcrypto
 SGX_COMMON_CFLAGS := $(SGX_COMMON_FLAGS) -Wjump-misses-init -Wstrict-prototypes
 SGX_COMMON_CXXFLAGS := $(SGX_COMMON_FLAGS) -Wnon-virtual-dtor -std=c++11
 
@@ -88,7 +88,7 @@ App_Objects := $(addprefix ${APP_OBJDIR}, ${App_Objects})
 App_Include_Paths := -I${APP_SRCDIR} -I${APPDIR}/include -I$(SGX_SDK)/include 
 
 #-fPIC 产生与位置无关的代码
-App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w
+App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w -lcrypto
 
 ifeq ($(SGX_DEBUG), 1)
         App_C_Flags += -DDEBUG -UNDEBUG -UEDEBUG
@@ -99,7 +99,7 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags)
-App_Link_Flags := -lpthread  -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) 
+App_Link_Flags := -lcrypto -lssl  -lpthread  -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name)   
 
 ifeq ($(OPENMP), 1)
 	App_Link_Flags += -lgomp 
@@ -136,9 +136,7 @@ Enclave_Objects := ${Enclave_Cpp_Objects} ${Enclave_C_Objects}
 
 ifneq ($(SGX_DNNL), 1)
 Enclave_DNNL_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}dnnl_*.*))
-$(warning $(Enclave_DNNL_Files))
 endif 
-
 
 Enclave_Objects := $(addprefix ${ENCLAVE_OBJDIR}, ${Enclave_Objects})
 
@@ -243,11 +241,11 @@ ifneq ($(Build_Mode), HW_RELEASE)
 	@echo "RUN  =>  $(App_Name) [$(SGX_MODE)|$(SGX_ARCH), OK]"
 endif
 
-
+EDL_DIR := Enclave/edls
 
 ######## App Objects ########
-${APP_SRCDIR}Enclave_u.h: $(SGX_EDGER8R) Enclave/Enclave.edl
-	@cd ${APP_SRCDIR} && $(SGX_EDGER8R) --untrusted ../../Enclave/Enclave.edl --search-path ../../Enclave --search-path $(SGX_SDK)/include
+${APP_SRCDIR}Enclave_u.h: $(SGX_EDGER8R) $(EDL_DIR)/Enclave.edl
+	@cd ${APP_SRCDIR} && $(SGX_EDGER8R) --untrusted ../../$(EDL_DIR)/Enclave.edl --search-path ../../$(EDL_DIR) --search-path $(SGX_SDK)/include
 	@echo "GEN  =>  $@"
 
 ${APP_SRCDIR}Enclave_u.c: ${APP_SRCDIR}Enclave_u.h
@@ -271,8 +269,8 @@ $(App_Name): $(App_Objects)  ${APP_OBJDIR}Enclave_u.o
 
 ######## Enclave Objects ########
 
-${ENCLAVE_SRCDIR}Enclave_t.h: $(SGX_EDGER8R) Enclave/Enclave.edl
-	@cd ${ENCLAVE_SRCDIR} && $(SGX_EDGER8R) --trusted ../Enclave.edl --search-path ../ --search-path $(SGX_SDK)/include --search-path src/include
+${ENCLAVE_SRCDIR}Enclave_t.h: $(SGX_EDGER8R) Enclave/edls/Enclave.edl
+	@cd ${ENCLAVE_SRCDIR} && $(SGX_EDGER8R) --trusted ../edls/Enclave.edl --search-path ../edls/ --search-path $(SGX_SDK)/include --search-path src/include
 	@echo "generated $@ by sgx_edger8r"
 
 ${ENCLAVE_SRCDIR}Enclave_t.c: ${ENCLAVE_SRCDIR}Enclave_t.h

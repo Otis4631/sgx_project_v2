@@ -1,0 +1,6 @@
+enum CIPHER {
+    RSA_ENCRYPT = 0x01, 
+    AES_ENCRYPT = 0x02,
+    RSA_DECRYPT = 0x04, 
+    AES_DECRYPT = 0x08, 
+};

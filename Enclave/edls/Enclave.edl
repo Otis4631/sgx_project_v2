@@ -7,7 +7,7 @@ enclave {
     from "sgx_tstdc.edl" import *;
 
     trusted{
-       
+       public void test();
           };
     
     untrusted {

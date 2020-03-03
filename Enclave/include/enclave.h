@@ -5,7 +5,9 @@
 #include <stdio.h> /* vsnprintf */
 #include <string.h>
 #include <sgx_trts.h>
+#include <vector>
 
+using namespace std;
 extern "C" {
     #include "im2col.h"
     #include "e_gemm.h"
@@ -26,6 +28,7 @@ void add_bias(float *output, float *biases, int batch, int n, int size);
 void backward_bias(float *bias_updates, float *delta, int batch, int n, int size);
 void scale_bias(float *output, float *scales, int batch, int n, int size);
 void ce_forward(int batch, int classes, float *pred, float *truth, float *delta, float *error);
+void gen_random_bytes(size_t bytes_len, vector<uint8_t> &tmp);
 
 
 #include "dnnl_forward.h"
