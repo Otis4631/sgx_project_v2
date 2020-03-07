@@ -121,22 +121,35 @@ int main()
     uint8_t* n = new uint8_t[n_len];
     uint8_t* e = new uint8_t[e_len];
     uint8_t* ciphertxt = new uint8_t[n_len];
+
     enc.get_raw_public_key(n, &n_len, e, &e_len);
     endian_swap(n, n_len);
     endian_swap(e, e_len);
-    test(EID, n, n_len, e, e_len, ciphertxt);
+
+    uint8_t* iv = new uint8_t[12];
+    size_t iv_len = 12;
+    uint8_t* en_message = new uint8_t[188];
+    size_t en_size = 16;
+    uint8_t* message = new uint8_t[10];
+    size_t message_len = 16;
+
+    test(EID, n, n_len, e, e_len, ciphertxt,en_message, en_size, iv, iv_len);
+
     OpenSSLCrypto d(RSA_OAEP | MODE_DECRYPT);
     d.open_private_key("/data/lz/sgx_project_v2/Enclave/private.pem", NULL);
 
-    uint8_t* decryptxt = new uint8_t[384];
+    uint8_t* sym_key = new uint8_t[384];
     size_t out_len = 384;
 
-    d.crypt(decryptxt, &out_len, ciphertxt, n_len);
+    d.crypt(sym_key, &out_len, ciphertxt, n_len);
 
     printf("Received sym key: ");
-    print_string2hex(decryptxt, out_len);
+    print_string2hex(sym_key, out_len);
 
     OpenSSLCrypto aes_gcm(AES_128_GCM | MODE_DECRYPT);
-    aes_gcm.AES_init(,);
+    aes_gcm.AES_init(sym_key, iv);
+    aes_gcm.crypt(message, &message_len, en_message, en_size);
+    printf("plain:%s\n", message);
+
 
 }

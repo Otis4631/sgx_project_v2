@@ -10,7 +10,6 @@
 
 #include "openssl_crypto.h"
 
-
 #define BUF_SIZE 1024
 
 using namespace std;
@@ -29,19 +28,26 @@ int md5_encrypt(const void *data, size_t len, unsigned char *md5)
     return 0;
 }
 
-
-int OpenSSLCrypto::set_mode(int _mode) {
-    int cipher = mode & CIPHER;
-    int param = mode & PARAM;
+int OpenSSLCrypto::set_mode(int _mode)
+{
+    int cur_cipher = mode & CIPHER;
+    int cur_param = mode & PARAM;
     mode = _mode;
-    if(mode & MODE_ENCRYPT) {
+    if((_mode & CIPHER) && cur_cipher != (_mode & CIPHER)) { // cipher change
+        clean_up();
+        mode = _mode;
+    }
+    
+    if (mode & MODE_ENCRYPT)
+    {
         enc = 1;
     }
-    else if(mode & MODE_DECRYPT)
+    else if (mode & MODE_DECRYPT)
         enc = 0;
 }
 
-void OpenSSLCrypto::clean_up() {
+void OpenSSLCrypto::clean_up()
+{
     if (pk_ctx)
         EVP_PKEY_CTX_free(pk_ctx);
     if (pkey)
@@ -57,18 +63,19 @@ void OpenSSLCrypto::clean_up() {
 
     if (iv)
         delete[] iv;
-        
-
     pk_ctx = NULL, pkey = NULL, fp = NULL, sym_ctx = NULL, rsa = NULL, key = NULL, iv = NULL;
 }
 
 int OpenSSLCrypto::init_status()
 {
-    pkey = EVP_PKEY_new();
-    if (NULL == pkey)
+    if (mode & CIPHER_RSA)
     {
-        err_handle();
-        return ERR_NEW_FAILED;
+        pkey = EVP_PKEY_new();
+        if (NULL == pkey)
+        {
+            err_handle();
+            return ERR_NEW_FAILED;
+        }
     }
 
     if (mode & CIPHER_AES)
@@ -107,8 +114,7 @@ int OpenSSLCrypto::set_RSA_padding()
 {
     if (mode & RSA_OAEP)
     {
-        if (EVP_PKEY_CTX_set_rsa_padding(pk_ctx, RSA_PKCS1_OAEP_PADDING) <= 0 
-            || !EVP_PKEY_CTX_set_rsa_oaep_md(pk_ctx, EVP_sha256()))
+        if (EVP_PKEY_CTX_set_rsa_padding(pk_ctx, RSA_PKCS1_OAEP_PADDING) <= 0 || !EVP_PKEY_CTX_set_rsa_oaep_md(pk_ctx, EVP_sha256()))
         {
             err_handle();
             return ERR_RUN_FAILED;
@@ -193,7 +199,6 @@ int OpenSSLCrypto::open_public_key(const char *pub_key_file)
         return ERR_RUN_FAILED;
     return 0;
 }
-
 
 int OpenSSLCrypto::open_private_key(const char *file, const char *passwd)
 {
@@ -341,22 +346,23 @@ int OpenSSLCrypto::get_raw_public_key(uint8_t *n_c, size_t *n_len, uint8_t *e_c,
 {
     if (mode & CIPHER_RSA)
     {
-        const BIGNUM **n = (const BIGNUM **)new BIGNUM**;
-        const BIGNUM **e = (const BIGNUM **)new BIGNUM**;
+        const BIGNUM **n = (const BIGNUM **)new BIGNUM **;
+        const BIGNUM **e = (const BIGNUM **)new BIGNUM **;
 
         RSA_get0_key(rsa, n, e, NULL);
         *n_len = BN_num_bytes(*n);
         *e_len = BN_num_bytes(*e);
-        if(n_c && e_c)
-            if(BN_bn2bin(*n, n_c) <= 0 || BN_bn2bin(*e, e_c) <= 0 ) {
+        if (n_c && e_c)
+            if (BN_bn2bin(*n, n_c) <= 0 || BN_bn2bin(*e, e_c) <= 0)
+            {
                 err_handle();
                 return ERR_RUN_FAILED;
             }
-            return 0;
+        return 0;
     }
     else
         return ERR_BAD_MODE;
-        
+
     return 0;
 }
 int OpenSSLCrypto::crypt(uint8_t *_out, size_t *_out_len, uint8_t *_in, size_t _in_len)
@@ -419,16 +425,7 @@ int OpenSSLCrypto::file_crypt(FILE *in, FILE *out)
 
 OpenSSLCrypto::~OpenSSLCrypto()
 {
-    if (pk_ctx)
-        EVP_PKEY_CTX_free(pk_ctx);
-    if (pkey)
-        EVP_PKEY_free(pkey);
-    if (fp)
-        fclose(fp);
-    if (sym_ctx)
-        EVP_CIPHER_CTX_free(sym_ctx);
-    if (rsa)
-        RSA_free(rsa);
+    clean_up();
 }
 
 size_t OpenSSLCrypto::get_key_length()
@@ -457,7 +454,7 @@ int OpenSSLCrypto::AES_init(uint8_t *_key, uint8_t *_iv)
 
     key = new uint8_t[key_len];
     iv = new uint8_t[iv_len];
-    
+
     memcpy(key, _key, key_len);
     memcpy(iv, _iv, iv_len);
     if (mode & CIPHER_AES)
@@ -530,4 +527,3 @@ void aes_128_gcm_test()
 //     uint8_t* e = new uint8_t[e_len];
 //     d.get_raw_public_key(n, &n_len, e, &e_len);
 // }
-
