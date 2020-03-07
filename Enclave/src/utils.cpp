@@ -4,6 +4,11 @@
 
 
 
+void print_string2hex(uint8_t* str, size_t n){
+    ocall_print_string2hex((const char*)str, n);
+}
+
+
 void gen_random_bytes(size_t bytes_len, vector<uint8_t> &tmp) {
     sgx_read_rand(tmp.data(), bytes_len);
 }

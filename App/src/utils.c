@@ -6,10 +6,21 @@
 #include <unistd.h>
 #include <float.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "utils.h"
 #include "base64.h"
 #include "sgx_err.h"
+
+
+void print_string2hex(uint8_t* data, size_t n) {
+    for(int i = 0; i < n; i++) {
+        printf("%X", data[i]);
+        if((i + 1) % 2 == 0 && i < n - 1)
+            printf(":");
+    }
+    printf("\n");
+}
 
 
 void gradient_clip(float* arr, size_t n, float threshold) {

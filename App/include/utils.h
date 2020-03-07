@@ -3,9 +3,11 @@
 #include <stdio.h>
 #include <time.h>
 #include "list.h"
+#include <stdint.h>
 
 #define SECRET_NUM -1234
 #define TWO_PI 6.2831853071795864769252866
+void print_string2hex(uint8_t* data, size_t n);
 void gradient_clip(float* arr, size_t n, float threshold);
 void add_bias(float *output, float *biases, int batch, int n, int size);
 float* read_from_base64(char* line, float* out);

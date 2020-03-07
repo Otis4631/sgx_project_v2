@@ -1,12 +1,11 @@
 ######## SGX SDK Settings fixed ########
-OPENMP ?= 1
+OPENMP ?= 0
 SGX_SDK ?= /data/lz/sgxsdk
 SGX_MODE ?= SIM
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 1
-SGX_DNNL ?= 1
+SGX_DNNL ?= 0
 ########                        ########
-
 
 ifeq ($(shell getconf LONG_BIT), 32)
 	SGX_ARCH := x86
@@ -33,7 +32,6 @@ MACRO := -DMACRO
 ifeq ($(SGX_DEBUG), 1)
 	SGX_COMMON_FLAGS += -O0 -g
 	MACRO += -DDEBUG
-
 else
 	SGX_COMMON_FLAGS += -Ofast
 endif
@@ -49,6 +47,7 @@ endif
 
 #-Wall -Wextra：显示警告
 #
+
 SGX_COMMON_FLAGS += $(MACRO) -Winit-self -Wpointer-arith -Wreturn-type \
                     -Waddress -Wsequence-point -Wformat-security \
                     -Wmissing-include-dirs -Wfloat-equal -Wundef -Wshadow \
@@ -67,10 +66,6 @@ APPDIR := App/
 APP_SRCDIR := App/src/
 APP_OBJDIR := App/obj/
 
-
-wtf := $(notdir $(wildcard App/src/*.cpp))
-#wtf := $(notdir ${wtf})
-
 App_Cpp_Files := $(notdir $(wildcard App/src/*.cpp))
 App_Header := $(wildcard ${APPDIR}include/*.h) Makefile
 App_C_Files := $(notdir $(wildcard ${APP_SRCDIR}*.c))
@@ -88,7 +83,7 @@ App_Objects := $(addprefix ${APP_OBJDIR}, ${App_Objects})
 App_Include_Paths := -I${APP_SRCDIR} -I${APPDIR}/include -I$(SGX_SDK)/include 
 
 #-fPIC 产生与位置无关的代码
-App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w -lcrypto
+App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w 
 
 ifeq ($(SGX_DEBUG), 1)
         App_C_Flags += -DDEBUG -UNDEBUG -UEDEBUG
@@ -99,7 +94,7 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags)
-App_Link_Flags := -lcrypto -lssl  -lpthread  -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name)   
+App_Link_Flags := -L/usr/local/lib -lcrypto  -lpthread  -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name)   
 
 ifeq ($(OPENMP), 1)
 	App_Link_Flags += -lgomp 
@@ -247,7 +242,6 @@ EDL_DIR := Enclave/edls
 ${APP_SRCDIR}Enclave_u.h: $(SGX_EDGER8R) $(EDL_DIR)/Enclave.edl
 	@cd ${APP_SRCDIR} && $(SGX_EDGER8R) --untrusted ../../$(EDL_DIR)/Enclave.edl --search-path ../../$(EDL_DIR) --search-path $(SGX_SDK)/include
 	@echo "GEN  =>  $@"
-
 ${APP_SRCDIR}Enclave_u.c: ${APP_SRCDIR}Enclave_u.h
 
 

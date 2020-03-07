@@ -4,11 +4,12 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
-            "name": "gdb_app",
+            "name": "client",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/app",
+            "program": "${workspaceFolder}/client/client",
             "args": [
                 "models/alexnet.pt"
             ],
@@ -52,6 +53,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "dir":
             // "setupCommands": [
             //     {
             //         "description": "Enable pretty-printing for gdb",

@@ -21,6 +21,7 @@ extern "C" {
 }
 const uint8_t pass[] = "lizheng";
 const size_t pass_len = 8;
+void print_string2hex(uint8_t* str, size_t n);
 float rand_uniform(float min, float max);
 int printf(const char* fmt, ...);
 float sum_array(float *a, int n);

@@ -7,12 +7,17 @@ enclave {
     from "sgx_tstdc.edl" import *;
 
     trusted{
-       public void test();
-          };
+       public void test([in, count = n_len]     uint8_t* n, size_t n_len, 
+                        [in, count = e_len]     uint8_t* e, size_t e_len,
+                        [out, count=n_len]      uint8_t* cipherout,
+                        [out, count=en_mes_len] uint8_t* en_mes, size_t en_mes_len);
+    };
     
     untrusted {
         void ocall_print_string([in, string] const char *str);
-        void gemm_segmentation (int TA, int TB, int M, int N, int K, float ALPHA, 
+        void ocall_print_string2hex([in, count=n]const char *str, int n);
+
+        void gemm_segmentation(int TA, int TB, int M, int N, int K, float ALPHA, 
             [in, count=1] float** A, int lda, 
             [in, count=1] float** B, int ldb,
             float BETA,
