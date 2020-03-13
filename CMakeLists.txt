@@ -12,30 +12,32 @@ set(SGX_ENCLAVE_SIGNER ${SGX_SDK}/bin/x64/sgx_sign) #以上的参数都是根据
 
 set(OPENMP 1)
 set(SGX_DNNL 0)
-
+set(SHARED 0)
+#####################################################################################
 if(SGX_DEBUG EQUAL 1)
+   message("Building in debug mode")
    set(SGX_COMMON_FLAGS "${SGX_COMMON_FLAGS} -O0 -g")
    add_definitions(-D DEBUG)
 else()
    set(SGX_COMMON_FLAGS "${SGX_COMMON_FLAGS} -Ofast")
 endif(SGX_DEBUG EQUAL 1)
 
-set(CMAKE_C_FLAGS "${SGX_COMMON_FLAGS}")
-set(CMAKE_CXX_FLAGS "${SGX_COMMON_FLAGS}")
-######################## Libtorch settings #############################################
-
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SGX_COMMON_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${SGX_COMMON_FLAGS}")
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
+
+set(EDL_FILES_PATH ${PROJECT_SOURCE_DIR}/Enclave/edls)
 
 
-find_package(OpenSSL REQUIRED)
-if(OPENSSL_FOUND)
+find_package(OpenSSL 1.1.0 REQUIRED)
+if(OpenSSL_FOUND)
    message("OpenSSL FOUND")
 endif()
 
 find_package(OpenMP REQUIRED)
-if(OPENMP_FOUND)
+if(OpenMP_FOUND)
    message("OPENMP FOUND")
 endif()
 
