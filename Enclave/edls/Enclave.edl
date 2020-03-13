@@ -7,11 +7,11 @@ enclave {
     from "sgx_tstdc.edl" import *;
 
     trusted{
-       public void test([in, count = n_len]     uint8_t* n, size_t n_len, 
-                        [in, count = e_len]     uint8_t* e, size_t e_len,
-                        [out, count=n_len]      uint8_t* cipherout,
-                        [out, count=en_mes_len] uint8_t* en_mes, size_t en_mes_len,
-                        [out, count=iv_len]     uint8_t* iv, size_t iv_len);
+       public int init_crypto(  [in, count = n_len]     uint8_t* n, size_t n_len, 
+                                [in, count = e_len]     uint8_t* e, size_t e_len,
+                                [out, count=n_len]      uint8_t* cipherout,
+                                [out, count=iv_len]     uint8_t* iv, size_t iv_len);
+        public void test ([in, out, count = n] uint8_t* p, size_t n);
     };
     
     untrusted {

@@ -5,6 +5,7 @@ SGX_MODE ?= SIM
 SGX_ARCH ?= x64
 SGX_DEBUG ?= 1
 SGX_DNNL ?= 0
+APP_SHARED ?= 0
 ########                        ########
 
 ifeq ($(shell getconf LONG_BIT), 32)
@@ -62,12 +63,12 @@ ifneq ($(SGX_MODE), HW)
 else
 	Urts_Library_Name := sgx_urts
 endif
-APPDIR := App/
+APP_DIR := App/
 APP_SRCDIR := App/src/
 APP_OBJDIR := App/obj/
 
+App_Header := $(wildcard ${APP_DIR}include/*.h) Makefile
 App_Cpp_Files := $(notdir $(wildcard App/src/*.cpp))
-App_Header := $(wildcard ${APPDIR}include/*.h) Makefile
 App_C_Files := $(notdir $(wildcard ${APP_SRCDIR}*.c))
 
 App_Cpp_Objects := $(App_Cpp_Files:.cpp=.o)
@@ -80,7 +81,7 @@ App_Objects := $(addprefix ${APP_OBJDIR}, ${App_Objects})
 
 
 
-App_Include_Paths := -I${APP_SRCDIR} -I${APPDIR}/include -I$(SGX_SDK)/include 
+App_Include_Paths := -I${APP_SRCDIR} -I${APP_DIR}/include -I$(SGX_SDK)/include 
 
 #-fPIC 产生与位置无关的代码
 App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w 
@@ -107,6 +108,12 @@ else
 endif
 
 App_Name := application
+ifeq ($(APP_SHARED), 1)
+	App_Name := libapp.so
+	App_C_Flags += -fPIC
+	App_Cpp_Flags += -fPIC
+	App_Link_Flags += -shared
+endif
 ######## Enclave Settings ########
 ifneq ($(SGX_MODE), HW)
 	Trts_Library_Name := sgx_trts_sim
@@ -116,10 +123,11 @@ else
 	Service_Library_Name := sgx_tservice
 endif
 
+ENCLAVE_DIR = Enclave/
 ENCLAVE_SRCDIR := Enclave/src/
 ENCLAVE_OBJDIR := Enclave/obj/
 
-
+Enclave_Header := $(wildcard ${ENCLAVE_DIR}include/*.h) Makefile
 Enclave_Cpp_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}*.cpp))
 Enclave_C_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}*.c))
 
@@ -130,7 +138,7 @@ Enclave_C_Objects := $(Enclave_C_Files:.c=.o)
 Enclave_Objects := ${Enclave_Cpp_Objects} ${Enclave_C_Objects}
 
 ifneq ($(SGX_DNNL), 1)
-Enclave_DNNL_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}dnnl_*.*))
+	Enclave_DNNL_Files := $(notdir $(wildcard ${ENCLAVE_SRCDIR}dnnl_*.*))
 endif 
 
 Enclave_Objects := $(addprefix ${ENCLAVE_OBJDIR}, ${Enclave_Objects})
@@ -238,52 +246,51 @@ endif
 
 EDL_DIR := Enclave/edls
 
+
+
+
 ######## App Objects ########
-${APP_SRCDIR}Enclave_u.h: $(SGX_EDGER8R) $(EDL_DIR)/Enclave.edl
-	@cd ${APP_SRCDIR} && $(SGX_EDGER8R) --untrusted ../../$(EDL_DIR)/Enclave.edl --search-path ../../$(EDL_DIR) --search-path $(SGX_SDK)/include
+$(APP_DIR)include/Enclave_u.h: $(SGX_EDGER8R) $(EDL_DIR)/Enclave.edl
+	@cd ${APP_SRCDIR} && $(SGX_EDGER8R) --untrusted  ../../$(EDL_DIR)/Enclave.edl --search-path ../../$(EDL_DIR) --search-path $(SGX_SDK)/include && mv Enclave_u.h ../include/
 	@echo "GEN  =>  $@"
-${APP_SRCDIR}Enclave_u.c: ${APP_SRCDIR}Enclave_u.h
+${APP_SRCDIR}Enclave_u.c: $(APP_DIR)include/Enclave_u.h
 
 
-${APP_OBJDIR}%.o: ${APP_SRCDIR}%.cpp ${APP_SRCDIR}Enclave_u.h ${App_Header}
-	@echo "generating $@ using  $<"
-	@$(CXX) $(SGX_COMMON_CXXFLAGS) $(App_Cpp_Flags) -c $< -o $@
+
+${APP_OBJDIR}%.o: ${APP_SRCDIR}%.cpp  ${App_Header} $(APP_DIR)include/Enclave_u.h
+	$(CXX) $(SGX_COMMON_CXXFLAGS) $(App_Cpp_Flags) -c $< -o $@
 	
 
-${APP_OBJDIR}%.o: ${APP_SRCDIR}%.c ${APP_SRCDIR}Enclave_u.h ${App_Header}
-	@echo "generating $@ using  $<"
-	@$(CC) $(SGX_COMMON_CFLAGS) $(App_C_Flags) -c $< -o $@
+${APP_OBJDIR}%.o: ${APP_SRCDIR}%.c  ${App_Header} $(APP_DIR)include/Enclave_u.h
+	$(CC) $(SGX_COMMON_CFLAGS) $(App_C_Flags) -c $< -o $@
 
 
 
 $(App_Name): $(App_Objects)  ${APP_OBJDIR}Enclave_u.o
-	@echo "linking $@ with $(App_Objects)"
-	@$(CXX) $^ -o $@ $(App_Link_Flags)
+	$(CXX) $^ -o $@ $(App_Link_Flags)
 
 
 ######## Enclave Objects ########
 
-${ENCLAVE_SRCDIR}Enclave_t.h: $(SGX_EDGER8R) Enclave/edls/Enclave.edl
-	@cd ${ENCLAVE_SRCDIR} && $(SGX_EDGER8R) --trusted ../edls/Enclave.edl --search-path ../edls/ --search-path $(SGX_SDK)/include --search-path src/include
+${ENCLAVE_DIR}include/Enclave_t.h: $(SGX_EDGER8R) Enclave/edls/Enclave.edl
+	@cd ${ENCLAVE_SRCDIR} && $(SGX_EDGER8R) --trusted  ../edls/Enclave.edl --search-path ../edls/ --search-path $(SGX_SDK)/include --search-path src/include && mv Enclave_t.h ../include 
 	@echo "generated $@ by sgx_edger8r"
 
-${ENCLAVE_SRCDIR}Enclave_t.c: ${ENCLAVE_SRCDIR}Enclave_t.h
+${ENCLAVE_SRCDIR}Enclave_t.c: ${ENCLAVE_DIR}include/Enclave_t.h
 
 
 
-${ENCLAVE_OBJDIR}%.o: ${ENCLAVE_SRCDIR}%.cpp ${ENCLAVE_SRCDIR}Enclave_t.h
-	@echo "generated  $@ using $<"
-	@$(CXX) $(SGX_COMMON_CXXFLAGS) $(Enclave_Cpp_Flags) -c $< -o $@
+
+${ENCLAVE_OBJDIR}%.o: ${ENCLAVE_SRCDIR}%.cpp $(Enclave_Header) ${ENCLAVE_DIR}include/Enclave_t.h
+	$(CXX) $(SGX_COMMON_CXXFLAGS) $(Enclave_Cpp_Flags) -c $< -o $@
 
 
-${ENCLAVE_OBJDIR}%.o: ${ENCLAVE_SRCDIR}%.c ${ENCLAVE_SRCDIR}Enclave_t.h
-	@echo "generated  $@ using $<"
-	@$(CC) $(SGX_COMMON_CFLAGS) $(Enclave_C_Flags) -c $< -o $@
+${ENCLAVE_OBJDIR}%.o: ${ENCLAVE_SRCDIR}%.c $(Enclave_Header) ${ENCLAVE_DIR}include/Enclave_t.h
+	$(CC) $(SGX_COMMON_CFLAGS) $(Enclave_C_Flags) -c $< -o $@
 
 
 $(Enclave_Name): $(Enclave_Objects)  ${ENCLAVE_OBJDIR}Enclave_t.o
-	@$(CXX) $^ -o $@ $(Enclave_Link_Flags)
-	@echo "LINK =>  $@"
+	$(CXX) $^ -o $@ $(Enclave_Link_Flags)
 
 $(Signed_Enclave_Name): $(Enclave_Name) $(Enclave_Config_File) Makefile
 	@$(SGX_ENCLAVE_SIGNER) sign -key Enclave/Enclave_private.pem -enclave $(Enclave_Name) -out $@ -config $(Enclave_Config_File)
@@ -291,8 +298,7 @@ $(Signed_Enclave_Name): $(Enclave_Name) $(Enclave_Config_File) Makefile
 
 .PHONY: clean
 clean:
-	@echo "$(App_Objects)"
-	@rm -rf .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Objects) ${APP_SRCDIR}Enclave_u.* $(Enclave_Objects) ${ENCLAVE_SRCDIR}Enclave_t.*
-	@rm -rf build/*
+	rm -rf .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Objects) ${APP_DIR}include/Enclave_u.* ${APP_SRCDIR}Enclave_u.* $(Enclave_Objects) ${ENCLAVE_SRCDIR}Enclave_t.* ${ENCLAVE_DIR}include/Enclave_t.*
+	rm -rf build/*
 test:
 	@echo ${App_Objects}                

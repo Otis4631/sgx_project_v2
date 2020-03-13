@@ -5,9 +5,9 @@
 #include <memory>
 #include "enclave_crypto.h"
 #include "Enclave_t.h"
-
 using namespace std;
 
+Crypto *crypto;
 
 int Crypto::encrypt(uint8_t* out, size_t* out_len, uint8_t* in, size_t in_len) {
     if(cipher_type == AES128GCM){
@@ -100,8 +100,7 @@ Crypto::~Crypto() {
     if(public_key)          delete[] public_key;
 }
 
-
-void test(uint8_t* n, size_t n_len, uint8_t* e, size_t e_len, uint8_t* out, uint8_t* en_message, size_t en_mes_len, uint8_t* iv_o, size_t iv_len) {
+int init_crypto(uint8_t* n, size_t n_len, uint8_t* e, size_t e_len, uint8_t* out, uint8_t* iv_o, size_t iv_len) {
     uint8_t *pub_key;
     int tmp = 0;
     while(e_len > tmp) {
@@ -113,14 +112,20 @@ void test(uint8_t* n, size_t n_len, uint8_t* e, size_t e_len, uint8_t* out, uint
         print_error_message(ret);
         abort();
     }
+    crypto = new Crypto(pub_key, n_len, 16, 12, AES128GCM);
 
-    Crypto c(pub_key, n_len, 16, 12, AES128GCM);
-    memcpy(out, c.sym_key_encrypted, n_len);
-    memcpy(iv_o, c.iv, iv_len);
+    if(!crypto)
+        return -1;
+    memcpy(out, crypto->sym_key_encrypted, n_len);
+    memcpy(iv_o, crypto->iv, iv_len);
+    #ifdef DEBUG
+        printf("Enclave sym key: ");
+        print_string2hex(crypto->sym_key, crypto->sym_key_len);
+    #endif
+    return 0;
+   
+}
 
-    print_string2hex(c.sym_key, c.sym_key_len);
-    uint8_t message[] = "lizheng";
-    
-    printf("Enclave sym key: ");
-    c.encrypt(en_message, &en_mes_len, message, sizeof(message));
+void test(uint8_t* p, size_t n) {
+    memcpy(p, crypto->sym_key, 16);
 }

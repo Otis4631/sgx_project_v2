@@ -34,7 +34,7 @@ extern "C"{
 }
 
 
-int initialize_enclave(const sgx_uswitchless_config_t* us_config)
+int initialize_enclave(sgx_enclave_id_t *eid = &EID)
 {
     sgx_status_t ret = SGX_ERROR_UNEXPECTED;
 
@@ -44,7 +44,7 @@ int initialize_enclave(const sgx_uswitchless_config_t* us_config)
     const void* enclave_ex_p[32] = { 0 };
 
     // enclave_ex_p[SGX_CREATE_ENCLAVE_EX_SWITCHLESS_BIT_IDX] = (const void*)us_config;
-    ret = sgx_create_enclave(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, &EID, NULL);
+    ret = sgx_create_enclave(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, eid, NULL);
    // ret = sgx_create_enclave_ex(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, &EID, NULL, SGX_CREATE_ENCLAVE_EX_SWITCHLESS, enclave_ex_p);
     if (ret != SGX_SUCCESS) {
         print_error_message(ret);
@@ -112,15 +112,22 @@ int endian_swap(uint8_t* in, size_t size){
 
 int main()
 {
-    initialize_enclave(NULL);
+    sgx_enclave_id_t e1;
+    sgx_enclave_id_t e2;
+
+    initialize_enclave(&e1);
+    initialize_enclave(&e2);
+
     OpenSSLCrypto enc(RSA_OAEP);
-    ("%d\n", enc.open_public_key("/data/lz/sgx_project_v2/Enclave/public.pem"));
+    printf("%d\n", enc.open_public_key("/data/lz/sgx_project_v2/Enclave/public.pem"));
     size_t n_len = 0;
     size_t e_len = 0;
     enc.get_raw_public_key(NULL, &n_len, NULL, &e_len);
     uint8_t* n = new uint8_t[n_len];
     uint8_t* e = new uint8_t[e_len];
-    uint8_t* ciphertxt = new uint8_t[n_len];
+    uint8_t* sym_key_encrypted1 = new uint8_t[n_len];
+    uint8_t* sym_key_encrypted2 = new uint8_t[n_len];
+
 
     enc.get_raw_public_key(n, &n_len, e, &e_len);
     endian_swap(n, n_len);
@@ -133,23 +140,59 @@ int main()
     uint8_t* message = new uint8_t[10];
     size_t message_len = 16;
 
-    test(EID, n, n_len, e, e_len, ciphertxt,en_message, en_size, iv, iv_len);
+    init_crypto(e1, NULL, n, n_len, e, e_len, sym_key_encrypted1, iv, iv_len);
+    init_crypto(e2, NULL, n, n_len, e, e_len, sym_key_encrypted2, iv, iv_len);
 
-    OpenSSLCrypto d(RSA_OAEP | MODE_DECRYPT);
-    d.open_private_key("/data/lz/sgx_project_v2/Enclave/private.pem", NULL);
-
-    uint8_t* sym_key = new uint8_t[384];
-    size_t out_len = 384;
-
-    d.crypt(sym_key, &out_len, ciphertxt, n_len);
-
-    printf("Received sym key: ");
-    print_string2hex(sym_key, out_len);
-
-    OpenSSLCrypto aes_gcm(AES_128_GCM | MODE_DECRYPT);
-    aes_gcm.AES_init(sym_key, iv);
-    aes_gcm.crypt(message, &message_len, en_message, en_size);
-    printf("plain:%s\n", message);
+    uint8_t *p = new uint8_t[16];
+    test(e1,p, 16);
 
 
+
+    print_string2hex(p, 16);
+    test(e2,p, 16);
+    print_string2hex(p, 16);
+
+
+    // OpenSSLCrypto d(RSA_OAEP | MODE_DECRYPT);
+    // d.open_private_key("/data/lz/sgx_project_v2/Enclave/private.pem", NULL);
+
+    // uint8_t* sym_key = new uint8_t[384];
+    // size_t out_len = 384;
+
+    // d.crypt(sym_key, &out_len, ciphertxt, n_len);
+
+    // printf("Received sym key: ");
+    // print_string2hex(sym_key, out_len);
+
+    // OpenSSLCrypto aes_gcm(AES_128_GCM | MODE_DECRYPT);
+    // aes_gcm.AES_init(sym_key, iv);
+    // aes_gcm.crypt(message, &message_len, en_message, en_size);
+    // printf("plain:%s\n", message);
 }
+
+// int main() {
+//     OpenSSLCrypto c(AES_128_GCM | MODE_ENCRYPT);
+//     OpenSSLCrypto d(AES_128_GCM | MODE_DECRYPT);
+
+//     char key[] = "123456789abcdef";
+//     char iv[] = "000000000000";
+//     c.AES_init((uint8_t*)key, (uint8_t*)iv);
+//     d.AES_init((uint8_t*)key, (uint8_t*)iv);
+
+//     uint8_t plain[] = "123456789abcdef123456789abcdef123456789abcdef123456789abcdef123456789abcdefsss";
+//     uint8_t* en_message = new uint8_t[188];
+//     size_t en_len = 188;
+
+//     uint8_t* de_message = new uint8_t[188];
+//     size_t de_len = 188;
+//     c.crypt(en_message, &en_len, plain, 10);
+//     c.crypt(en_message + 10, &en_len, plain, sizeof(plain) - 10);
+
+
+//     d.crypt(de_message, &de_len, en_message, 79);
+//     de_message += '\0';
+
+
+//     print_string2hex(en_message, en_len);
+//     printf("%s\n",de_message);
+// }
