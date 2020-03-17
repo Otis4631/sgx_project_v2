@@ -4,7 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
+        {
+            "name": "Python: 当前文件",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
         {
             "name": "client",
             "type": "cppdbg",
@@ -47,7 +53,11 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/app",
-            "args": ["train", "data/train.cfg", "cfg/e_mynet.cfg"],
+            "args": [
+                "train",
+                "data/train.cfg",
+                "cfg/e_mynet.cfg"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

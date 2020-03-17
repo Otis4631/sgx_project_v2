@@ -18,9 +18,9 @@ enclave{
          [count=input_len]       float* input;
         
          size_t output_len;
-         [count=outputs]    float* output;
+         [count=output_len]    float* output;
 
-         size_t weight_len;
+         size_t weights_len;
          [count=weight_len]      float* weights;
         
          size_t bias_len;

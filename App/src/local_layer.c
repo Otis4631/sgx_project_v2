@@ -281,3 +281,4 @@ void push_local_layer(local_layer l)
     cuda_push_array(l.biases_gpu, l.biases, l.outputs);
 }
 #endif
+
