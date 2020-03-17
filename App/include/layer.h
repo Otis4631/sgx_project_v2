@@ -43,8 +43,6 @@ typedef enum {
 } LAYER_TYPE;
 
 
-
-
 struct layer{
     LAYER_TYPE type;            // 网络层的类型，枚举类型，取值比如DROPOUT,CONVOLUTIONAL,MAXPOOL分别表示dropout层，卷积层，最大池化层，可参见LAYER_TYPE枚举类型的定义
     ACTIVATION activation;
@@ -284,8 +282,6 @@ struct layer{
 
    
 };
-
-
 
 void free_layer(layer);
 

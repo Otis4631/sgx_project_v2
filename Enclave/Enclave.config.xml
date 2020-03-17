@@ -6,9 +6,10 @@
 
 <!-- 128M -->
   <HeapMaxSize>0x8000000</HeapMaxSize>
-  <ReservedMemMaxSize>0x80000</ReservedMemMaxSize>
+  <ReservedMemMaxSize>0x8000000</ReservedMemMaxSize>
   <ReservedMemExecutable>1</ReservedMemExecutable>
-  <TCSNum>10</TCSNum>
+  <TCSNum>20</TCSNum>
+  <TCSMinPool>20</TCSMinPool>
   <TCSPolicy>1</TCSPolicy>
   <DisableDebug>0</DisableDebug>
   <MiscSelect>0</MiscSelect>

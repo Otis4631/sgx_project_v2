@@ -1,7 +1,6 @@
 #ifndef TYPES
 #define TYPES
-typedef unsigned long size_t;
-
+#include <stdint.h>
 typedef enum{
     LOGISTIC, RELU, RELIE, LINEAR, RAMP, TANH, PLSE, LEAKY, ELU, LOGGY, STAIR, HARDTAN, LHTAN
 }ACTIVATION;
@@ -39,19 +38,19 @@ typedef enum {
 } LAYER_TYPE;
 
 typedef struct {
-         size_t batch;
-         size_t inputs;
-         size_t outputs;
-         size_t h;
-         size_t w;
-         size_t ic;
-         size_t out_h;
-         size_t out_w;
-         size_t oc;
+         int64_t batch;
+         int64_t inputs;
+         int64_t outputs;
+         int64_t h;
+         int64_t w;
+         int64_t ic;
+         int64_t out_h;
+         int64_t out_w;
+         int64_t oc;
 
-         size_t size;
-         size_t stride;
-         size_t pad;
+         int64_t size;
+         int64_t stride;
+         int64_t pad;
 
          float* input;
          float* biases;

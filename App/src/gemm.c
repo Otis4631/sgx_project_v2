@@ -7,6 +7,9 @@
 #include "sgx_err.h"
 #include "sys/sysinfo.h"
 int num_cpu; 
+#ifdef OPENMP
+#include <omp.h>
+#endif
 
 typedef struct gemm_thread_data {
             int TA,  TB,  M,  N,  K;
@@ -148,8 +151,10 @@ void gemm_nn(int M, int N, int K, float ALPHA,
         float *B, int ldb,
         float *C, int ldc)
 {
-    #pragma omp shedule(guided) parallel for  num_threads(omp_get_num_procs() / 2)
+   //    #pragma omp parallel for num_threads(num_cpu / 2)
+   #pragma omp parallel for num_threads(num_cpu / 2)
     for(int i = 0; i < M; ++i){
+        //printf("%d\n", omp_get_num_threads());
         for(int k = 0; k < K; ++k){
              float A_PART = ALPHA*A[i*lda+k];
             for(int j = 0; j < N; ++j){
@@ -183,7 +188,7 @@ void gemm_nt(int M, int N, int K, float ALPHA,
         float *C, int ldc)
 {
    // int i,j,k;
-    #pragma omp shedule(guided) parallel for  num_threads(omp_get_num_procs() / 2)
+       #pragma omp parallel for num_threads(num_cpu / 2)
     for(int i = 0; i < M; ++i){
         for(int j = 0; j < N; ++j){
              float sum = 0;
@@ -218,7 +223,7 @@ void gemm_tn(int M, int N, int K, float ALPHA,
         float *C, int ldc)
 {
    // int i,j,k;
-    #pragma omp shedule(guided) parallel for  num_threads(omp_get_num_procs() / 2)
+       #pragma omp parallel for num_threads(num_cpu / 2)
     for(int i = 0; i < M; ++i){
         for(int k = 0; k < K; ++k){
              float A_PART = ALPHA*A[k*lda+i];
@@ -252,7 +257,7 @@ void gemm_tt(int M, int N, int K, float ALPHA,
         float *C, int ldc)
 {
     //int i,j,k;
-    #pragma omp shedule(guided) parallel for  num_threads(omp_get_num_procs() / 2)
+       #pragma omp parallel for num_threads(num_cpu / 2)
     for(int i = 0; i < M; ++i){
         for(int j = 0; j < N; ++j){
              float sum = 0;
@@ -273,7 +278,7 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
     //printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
    // int i, j;
     // 先把BETA * C计算完了，并将结果存在C中，得到的C将为M行，N列（按行存储在一维数组C中）
-    #pragma omp shedule(guided) parallel for  num_threads(omp_get_num_procs() / 2)
+       #pragma omp parallel for num_threads(num_cpu / 2)
     for(int i = 0; i < M; ++i){
         for(int j = 0; j < N; ++j){
             C[i*ldc + j] *= BETA;

@@ -52,9 +52,6 @@ inline int handle_errors(
         if (it != engine_kinds.begin()) engine_kind_str += "/";
         engine_kind_str += engine_kind2str_upper(*it);
     }
-
-    printf( "Example " , (exit_code ? "failed" : "passed") , " on "
-                , engine_kind_str , "." );
     return exit_code;
 }
 

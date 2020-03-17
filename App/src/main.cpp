@@ -44,7 +44,7 @@ int initialize_enclave(sgx_enclave_id_t *eid = &EID)
     const void* enclave_ex_p[32] = { 0 };
 
     // enclave_ex_p[SGX_CREATE_ENCLAVE_EX_SWITCHLESS_BIT_IDX] = (const void*)us_config;
-    ret = sgx_create_enclave(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, eid, NULL);
+    ret = sgx_create_enclave("/data/lz/sgx_project_v2/build/enclave.signed.so", SGX_DEBUG_FLAG, NULL, NULL, eid, NULL);
    // ret = sgx_create_enclave_ex(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, &EID, NULL, SGX_CREATE_ENCLAVE_EX_SWITCHLESS, enclave_ex_p);
     if (ret != SGX_SUCCESS) {
         print_error_message(ret);
@@ -54,13 +54,13 @@ int initialize_enclave(sgx_enclave_id_t *eid = &EID)
     return 0;
 }
 
-int destory_enclave(void)
+int destory_enclave(sgx_enclave_id_t *eid = &EID)
 {
     sgx_status_t ret = SGX_ERROR_UNEXPECTED;
     
     /* Call sgx_create_enclave to initialize an enclave instance */
     /* Debug Support: set 2nd parameter to 1 */
-    ret = sgx_destroy_enclave(EID);
+    ret = sgx_destroy_enclave(*eid);
     if (ret != SGX_SUCCESS) {
         printf("error when destory enclave\n");
         return -1;
@@ -75,33 +75,36 @@ void encrypt() {
     decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
 }
 
-// int main(int argc, char ** argv){
-//     if(argc < 3){
-//         printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] ", argv[0]);
-//         return -1;
-//     }
-//     /* Configuration for Switchless SGX */
-//     #ifdef OPENMP
-//         printf("OPENMP!\n");
-//     #endif
-//     time_t t = clock();
-//     if(initialize_enclave(NULL) == 0)
-//         printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
-//     else
-//         return -1;
-//     char * weights_path = NULL;
-//     if(argc > 4)
-//         weights_path = argv[4];
-//     if(0 == strcmp(argv[1], "train"))
-//         train(argv[2], argv[3], weights_path);
-//     else if(0 == strcmp(argv[1], "predict"))
-//         predict(argv[2], argv[3], weights_path);
-//     else
-//     {
-//         printf("Unknown args\n");
-//     }
-//     destory_enclave();
-// }
+int main(int argc, char ** argv){
+    if(argc < 3){
+        printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] \n", argv[0]);
+        return -1;
+    }
+    
+    #ifdef OPENMP
+        printf("OPENMP!\n");
+    #endif
+    time_t t = clock();
+    if(initialize_enclave() == 0)
+        printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
+    else{
+        printf("Initialize enclave failed\n");
+        return -1;
+    }
+       
+    char * weights_path = NULL;
+    if(argc > 4)
+        weights_path = argv[4];
+    if(0 == strcmp(argv[1], "train"))
+        train(argv[2], argv[3], weights_path);
+    else if(0 == strcmp(argv[1], "predict"))
+        predict(argv[2], argv[3], weights_path);
+    else
+    {
+        printf("Unknown args\n");
+    }
+    destory_enclave();
+}
 
 int endian_swap(uint8_t* in, size_t size){
     for(int i = 0; i < size / 2; i++) {
@@ -110,65 +113,65 @@ int endian_swap(uint8_t* in, size_t size){
 }
 
 
-int main()
-{
-    sgx_enclave_id_t e1;
-    sgx_enclave_id_t e2;
+// int main()
+// {
+//     sgx_enclave_id_t e1;
+//     sgx_enclave_id_t e2;
 
-    initialize_enclave(&e1);
-    initialize_enclave(&e2);
+//     initialize_enclave(&e1);
+//     initialize_enclave(&e2);
 
-    OpenSSLCrypto enc(RSA_OAEP);
-    printf("%d\n", enc.open_public_key("/data/lz/sgx_project_v2/Enclave/public.pem"));
-    size_t n_len = 0;
-    size_t e_len = 0;
-    enc.get_raw_public_key(NULL, &n_len, NULL, &e_len);
-    uint8_t* n = new uint8_t[n_len];
-    uint8_t* e = new uint8_t[e_len];
-    uint8_t* sym_key_encrypted1 = new uint8_t[n_len];
-    uint8_t* sym_key_encrypted2 = new uint8_t[n_len];
-
-
-    enc.get_raw_public_key(n, &n_len, e, &e_len);
-    endian_swap(n, n_len);
-    endian_swap(e, e_len);
-
-    uint8_t* iv = new uint8_t[12];
-    size_t iv_len = 12;
-    uint8_t* en_message = new uint8_t[188];
-    size_t en_size = 16;
-    uint8_t* message = new uint8_t[10];
-    size_t message_len = 16;
-
-    init_crypto(e1, NULL, n, n_len, e, e_len, sym_key_encrypted1, iv, iv_len);
-    init_crypto(e2, NULL, n, n_len, e, e_len, sym_key_encrypted2, iv, iv_len);
-
-    uint8_t *p = new uint8_t[16];
-    test(e1,p, 16);
+//     OpenSSLCrypto enc(RSA_OAEP);
+//     printf("%d\n", enc.open_public_key("/data/lz/sgx_project_v2/Enclave/public.pem"));
+//     size_t n_len = 0;
+//     size_t e_len = 0;
+//     enc.get_raw_public_key(NULL, &n_len, NULL, &e_len);
+//     uint8_t* n = new uint8_t[n_len];
+//     uint8_t* e = new uint8_t[e_len];
+//     uint8_t* sym_key_encrypted1 = new uint8_t[n_len];
+//     uint8_t* sym_key_encrypted2 = new uint8_t[n_len];
 
 
+//     enc.get_raw_public_key(n, &n_len, e, &e_len);
+//     endian_swap(n, n_len);
+//     endian_swap(e, e_len);
 
-    print_string2hex(p, 16);
-    test(e2,p, 16);
-    print_string2hex(p, 16);
+//     uint8_t* iv = new uint8_t[12];
+//     size_t iv_len = 12;
+//     uint8_t* en_message = new uint8_t[188];
+//     size_t en_size = 16;
+//     uint8_t* message = new uint8_t[10];
+//     size_t message_len = 16;
+
+//     init_crypto(e1, NULL, n, n_len, e, e_len, sym_key_encrypted1, iv, iv_len);
+//     init_crypto(e2, NULL, n, n_len, e, e_len, sym_key_encrypted2, iv, iv_len);
+
+//     uint8_t *p = new uint8_t[16];
+//     test(e1,p, 16);
 
 
-    // OpenSSLCrypto d(RSA_OAEP | MODE_DECRYPT);
-    // d.open_private_key("/data/lz/sgx_project_v2/Enclave/private.pem", NULL);
 
-    // uint8_t* sym_key = new uint8_t[384];
-    // size_t out_len = 384;
+//     print_string2hex(p, 16);
+//     test(e2,p, 16);
+//     print_string2hex(p, 16);
 
-    // d.crypt(sym_key, &out_len, ciphertxt, n_len);
 
-    // printf("Received sym key: ");
-    // print_string2hex(sym_key, out_len);
+//     // OpenSSLCrypto d(RSA_OAEP | MODE_DECRYPT);
+//     // d.open_private_key("/data/lz/sgx_project_v2/Enclave/private.pem", NULL);
 
-    // OpenSSLCrypto aes_gcm(AES_128_GCM | MODE_DECRYPT);
-    // aes_gcm.AES_init(sym_key, iv);
-    // aes_gcm.crypt(message, &message_len, en_message, en_size);
-    // printf("plain:%s\n", message);
-}
+//     // uint8_t* sym_key = new uint8_t[384];
+//     // size_t out_len = 384;
+
+//     // d.crypt(sym_key, &out_len, ciphertxt, n_len);
+
+//     // printf("Received sym key: ");
+//     // print_string2hex(sym_key, out_len);
+
+//     // OpenSSLCrypto aes_gcm(AES_128_GCM | MODE_DECRYPT);
+//     // aes_gcm.AES_init(sym_key, iv);
+//     // aes_gcm.crypt(message, &message_len, en_message, en_size);
+//     // printf("plain:%s\n", message);
+// }
 
 // int main() {
 //     OpenSSLCrypto c(AES_128_GCM | MODE_ENCRYPT);

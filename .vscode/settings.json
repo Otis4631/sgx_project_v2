@@ -83,7 +83,9 @@
         "image.h": "c",
         "data.h": "c",
         "ecall_batchnorm_layer.h": "c",
-        "dropout_layer.h": "c"
+        "dropout_layer.h": "c",
+        "stdint.h": "c",
+        "enclave_t.h": "c"
     },
     "git.ignoreLimitWarning": true,
     "python.pythonPath": "/usr/bin/python",

@@ -5,7 +5,7 @@
 Condition|Time| Space |
 -|-|-|
 without enclave|0.772s|/|
-enclave without cipher| 0.650s| 58096KB≈56.734MB|
+enclave without cipher| 0.650s| 58096KB≈56.734MB| DNNL: 56528KB_5940KB(reseved)  47120KB(-Ofast)_5940KB()
 enclave with rc4 cipher| 1.462s| 29088KB≈28.40MB|
 
 *在不加密的情况下，使用enclave耗时比未使用enclave耗时短的原因（猜测）*
@@ -21,7 +21,21 @@ Plain OpenMP|0.528s|/|
 enclave(DNNL) without cipher| 0.327s| N/A|
 enclave with rc4 cipher| 3.9s| N/A|
 
+batch_size:1024
+space:
 
-batch size: 3072
-    openMP(num_cpu / 2): 17.9s
-    single thread: 20.5s
+    DNNL: 94160KB_5940KB
+    DNNL(max_batch:10): 112976KB
+    DNNL(max_batch:20): 112976KB
+
+    plain(max_batch:5): 7KB_59664KB_0KB
+    plain(max_batch:20): 59664KB
+time: 
+    plain: 0.846s
+    DNNL: 0.903s
+
+
+
+batch size: 2048
+    openMP(num_cpu / 2):1.931s
+    single thread: 2.066s
