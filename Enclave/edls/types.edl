@@ -1,5 +1,10 @@
 enclave{
+    // 方向属性只能加在strcut上，无法加载member上
      include "types.h"
+     struct test{
+         [in, out, count = arr_len]int * arr;
+         size_t arr_len;
+    };
      struct ecall_layer{
          size_t batch;
          size_t inputs;

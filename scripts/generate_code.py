@@ -2,9 +2,10 @@ import string
 import os
 import re
 
-APP_SRC = "../App/src"
-ENCALVE_SRC = "../Enclave/src"
-EDL_SRC = "../Enclave/edls"
+BASE = "/data/lz/sgx_project_v2"
+APP_SRC = BASE + "/App/src"
+ENCALVE_SRC = BASE + "/Enclave/src"
+EDL_SRC = BASE + "/Enclave/edls"
 c_type = r"(int|void|long|float|double)"
 
 class declaration_list(list):
@@ -74,6 +75,7 @@ class App_Searcher:
         self.function_name = func_name
         self.app_files = os.listdir(APP_SRC)
         self.code = []
+        self.code_splited = []
         self.declaration = []
 
 
@@ -90,12 +92,14 @@ class App_Searcher:
                 res = res.group(0).strip()
                 self.code.append(res)
                 dlr = declaration_list(self.search_declaration(res).group(0) + ";")
+                body = re.search(r"\{(.|\n)*\}", res).group(0)
+                self.code_splited.append([dlr, body])
                 self.declaration.append(dlr)
     
     def code_preprocess(self, code):
-        pattern1 = re.compile(r'\s*//.*')
+        pattern1 = re.compile(r'\s*//(?!sizedefination).*')
         result = re.sub(pattern1, '', code)
-        pattern2 = re.compile(r'/\*(.|\n|\s)*?\*/', re.S)
+        pattern2 = re.compile(r'/\*(?!sizedefination)(.|\n|\s)*?\*/', re.S)
         result = re.sub(pattern2, '', result)
         return result.strip()
 
@@ -121,13 +125,15 @@ class App_Searcher:
 #     generate_edl_file("auto_forward.edl", list_tmp)
 
 class EDL_Generator:
-    def __init__(self, function_name):
-        self.app_searcher = App_Searcher(function_name)
+    def __init__(self, file_prefix, declaration):
+        self.declaration = declaration
+        self.prefix = file_prefix
+        self.file_name = self.prefix + "_auto_generated.edl"
 
-    def generate_forward(self, file_name="forward_auto_generated.edl"):
-        list_tmp = self.app_searcher.declaration.copy()
-        self.prepare_declaration("ecall_", list_tmp)
-        self.generate_edl_file(file_name, list_tmp)
+    def generate(self, _type = "ecall_"):
+        self.edlify_declaration = self.declaration.copy()
+        self.prepare_declaration(_type, self.edlify_declaration)
+        self.generate_edl_file(self.file_name, self.edlify_declaration)
 
     def prepare_declaration(self, prefix, declare_list):
         for i in range(len(declare_list)):
@@ -138,8 +144,7 @@ class EDL_Generator:
                 if(not re.match(c_type, declare_list[i][2][j][0])):
                     if(re.match(r".*_layer", declare_list[i][2][j][0])):
                         declare_list[i][2][j][0] = "layer"
-                    declare_list[i][2][j][0] = prefix + declare_list[i][2][j][0]
-
+                    declare_list[i][2][j][0] = "[in, count = 1] struct " + prefix + declare_list[i][2][j][0] + "*"
 
 
     def generate_edl_file(self, file_name, declare_list):
@@ -166,7 +171,66 @@ enclave{
             fp.write(code)
 
 
-e = EDL_Generator(r"forward_\w+_layer")
-e.generate_forward();
-def enclave_code_generator():
-    pass
+def enclave_code_generator(prefix, code_splited, edlify_declaration):
+    file_name = prefix + "_auto_generated.cpp"
+    code_t = """
+#include "enclave.h"
+    """ 
+    with open(ENCALVE_SRC + "/" + file_name, "w") as fp:
+        for i, code in enumerate(code_splited):
+            n_code = ""
+            edlify_declaration[i][0] = edlify_declaration[i][0].replace("public ", "")
+            edlify_declaration[i][0] = edlify_declaration[i][0].replace("\t", "")
+            declaration = str(edlify_declaration[i]).replace(";", "")
+            n_code = declaration + code[1]
+            code_t += (n_code + "\n")
+        fp.write(code_t)
+
+            
+def ecall_warpper_generator(file , code_splited):
+    for declaration, body in code_splited:
+        prog = re.compile(r"(?<=l\.)\w+")
+        layers_element = set(prog.findall(body))
+        net_element = set(re.findall(r"(?<=net\.)\w+", body))
+        tmp = ""
+        tmp2 = ""
+        for elm in layers_element: # layer
+            size = re.search(r"(?<=(%s_len=))\s*((\w|.))+?;" % elm, body)
+            tmp += "nl.{0} = l.{0}; \n".format(elm)
+            if(size):
+                tmp += "nl.{}_len = {}\n".format(elm, size)
+        
+        for enm in net_element:
+
+            size = re.search(r"(?<=(%s_len=))\s*((\w|.))+?;" % elm, body)
+            tmp2 += "en.{0} = net.{0}; \n".format(elm)
+            if(size):
+                tmp2 += "en.{}_len = {}\n".format(elm, size)
+
+        t = string.Template("""
+int e_$function_name(layer l, network net) {
+    ecall_layer nl;
+    ecall_network en;
+    $ecall_layer
+    $ecall_network
+    sgx_status_t ret = ecall_$function_name(&el, &en);
+    if(ret != SGX_SUCCESS) {
+        print_error_message(ret);
+        return -1;
+    }
+}
+""")
+        data = {
+            "function_name": declaration[1],
+            "ecall_layer": tmp,
+            "ecall_network":tmp2
+    }
+        code_t = t.safe_substitute(**data)
+        print(code_t)
+
+
+forward = App_Searcher(r"forward_\w+_layer")
+ecall_warpper_generator("e_forward", forward.code_splited)
+e = EDL_Generator("forward", forward.declaration)
+e.generate();
+enclave_code_generator("forward", forward.code_splited, e.edlify_declaration)
