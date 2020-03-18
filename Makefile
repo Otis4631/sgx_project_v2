@@ -4,7 +4,7 @@ DEST_EXE_NAME = app
 ARGS = train /data/lz/sgx_project_v2/data/train.cfg /data/lz/sgx_project_v2/cfg/e_mynet.cfg
 
 all: build
-	cd $(BUILD_DIR) &&  make -j20
+	cd $(BUILD_DIR) &&  make -j1
 run:
 	./$(DEST_DIR)/$(DEST_EXE_NAME) $(ARGS)
 clean:

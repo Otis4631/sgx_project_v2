@@ -70,12 +70,12 @@ def c_function_regex(function_name):
 
 
 class App_Searcher:
-    def __init__(self):
+    def __init__(self, func_name):
+        self.function_name = func_name
         self.app_files = os.listdir(APP_SRC)
-        self.forward_code = []
-        self.forward_declaration = []
-        self.backward_code = []
-        self.backward_declaration = []
+        self.code = []
+        self.declaration = []
+
 
         for file in self.app_files:
             try:
@@ -85,20 +85,12 @@ class App_Searcher:
             if(suffix != "c" and suffix != "cpp"):
                 continue
             res = self.search_function(
-                "{}/{}".format(APP_SRC, file), r"forward_\w+_layer")
+                "{}/{}".format(APP_SRC, file), func_name)
             if(res):
                 res = res.group(0).strip()
-                self.forward_code.append(res)
+                self.code.append(res)
                 dlr = declaration_list(self.search_declaration(res).group(0) + ";")
-                self.forward_declaration.append(dlr)
-
-            res = self.search_function(
-                "{}/{}".format(APP_SRC, file), r"backward_\w+_layer")
-            if(res):
-                res = res.group(0).strip()
-                self.backward_code.append(res)
-                dlr = declaration_list(self.search_declaration(res).group(0) + ";")
-                self.backward_declaration.append(dlr)
+                self.declaration.append(dlr)
     
     def code_preprocess(self, code):
         pattern1 = re.compile(r'\s*//.*')
@@ -122,20 +114,18 @@ class App_Searcher:
         return res
 
 
-
 # def edl_generator():
 #     app_searcher = App_Searcher()
 #     list_tmp = app_searcher.forward_declaration.copy()
 #     prepare_declaration("ecall_", list_tmp)
 #     generate_edl_file("auto_forward.edl", list_tmp)
 
-
 class EDL_Generator:
-    def __init__(self):
-        self.app_searcher = App_Searcher()
+    def __init__(self, function_name):
+        self.app_searcher = App_Searcher(function_name)
 
     def generate_forward(self, file_name="forward_auto_generated.edl"):
-        list_tmp = self.app_searcher.forward_declaration.copy()
+        list_tmp = self.app_searcher.declaration.copy()
         self.prepare_declaration("ecall_", list_tmp)
         self.generate_edl_file(file_name, list_tmp)
 
@@ -159,6 +149,7 @@ class EDL_Generator:
 """
 // AUTO-GENERATED, DO NOT EDIT IT
 enclave{
+    from "types.edl" import *;
     trusted{
         $ecall_functions
     };
@@ -175,7 +166,7 @@ enclave{
             fp.write(code)
 
 
-e = EDL_Generator()
+e = EDL_Generator(r"forward_\w+_layer")
 e.generate_forward();
 def enclave_code_generator():
     pass

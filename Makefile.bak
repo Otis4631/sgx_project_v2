@@ -81,7 +81,7 @@ App_Objects := $(addprefix ${APP_OBJDIR}, ${App_Objects})
 
 
 
-App_Include_Paths := -I${APP_SRCDIR} -I${APP_DIR}/include -I$(SGX_SDK)/include 
+App_Include_Paths := -Icommon -I${APP_SRCDIR} -I${APP_DIR}/include -I$(SGX_SDK)/include 
 
 #-fPIC 产生与位置无关的代码
 App_C_Flags := -fPIC -Wno-attributes $(App_Include_Paths) -w 
@@ -146,7 +146,7 @@ Enclave_Objects := $(addprefix ${ENCLAVE_OBJDIR}, ${Enclave_Objects})
 Crypto_Library_Name := sgx_tcrypto
 Switchless_Library_Name := sgx_tswitchless
 
-Enclave_Include_Paths :=  -IEnclave/src -IEnclave/include  -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx
+Enclave_Include_Paths :=  -Icommon -IEnclave/src -IEnclave/include  -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx
 
 Enclave_C_Flags := $(Enclave_Include_Paths) -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -DSGX
 CC_BELOW_4_9 := $(shell expr "`$(CC) -dumpversion`" \< "4.9")

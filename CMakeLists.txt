@@ -12,7 +12,7 @@ set(SGX_ENCLAVE_SIGNER ${SGX_SDK}/bin/x64/sgx_sign) #以上的参数都是根据
 set(OPENMP 1)
 set(SGX_DNNL 0)
 set(SHARED 0)
-set(SGX_DEBUG 0)
+set(SGX_DEBUG 1)
 
 
 # add_definitions(-D CRYPTO)

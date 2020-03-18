@@ -1,0 +1,144 @@
+mkdir ./build;cd ./build; cmake ..
+-- The C compiler identification is GNU 5.4.0
+-- The CXX compiler identification is GNU 5.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found OpenSSL: /usr/local/lib/libcrypto.so (found suitable version "1.1.0l", minimum required is "1.1.0")  
+-- Found OpenMP_C: -fopenmp (found version "4.0") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.0") 
+-- Found OpenMP: TRUE (found version "4.0")  
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /data/lz/sgx_project_v2/build
+cd ./build &&  make -j1
+make[1]: Entering directory '/data/lz/sgx_project_v2/build'
+/usr/local/bin/cmake -S/data/lz/sgx_project_v2 -B/data/lz/sgx_project_v2/build --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/local/bin/cmake -E cmake_progress_start /data/lz/sgx_project_v2/build/CMakeFiles /data/lz/sgx_project_v2/build/CMakeFiles/progress.marks
+make -f CMakeFiles/Makefile2 all
+make[2]: Entering directory '/data/lz/sgx_project_v2/build'
+make -f App/CMakeFiles/app.dir/build.make App/CMakeFiles/app.dir/depend
+make[3]: Entering directory '/data/lz/sgx_project_v2/build'
+[  1%] make ucode
+cd /data/lz/sgx_project_v2/build/App && cd /data/lz/sgx_project_v2/App/src && /data/lz/sgxsdk/bin/x64/sgx_edger8r --untrusted /data/lz/sgx_project_v2/Enclave/edls/Enclave.edl --search-path /data/lz/sgx_project_v2/Enclave/edls --search-path /data/lz/sgxsdk/include && mv Enclave_u.h ../include/
+cd /data/lz/sgx_project_v2/build && /usr/local/bin/cmake -E cmake_depends "Unix Makefiles" /data/lz/sgx_project_v2 /data/lz/sgx_project_v2/App /data/lz/sgx_project_v2/build /data/lz/sgx_project_v2/build/App /data/lz/sgx_project_v2/build/App/CMakeFiles/app.dir/DependInfo.cmake --color=
+Scanning dependencies of target app
+make[3]: Leaving directory '/data/lz/sgx_project_v2/build'
+make -f App/CMakeFiles/app.dir/build.make App/CMakeFiles/app.dir/build
+make[3]: Entering directory '/data/lz/sgx_project_v2/build'
+[  3%] Building CXX object App/CMakeFiles/app.dir/src/encrypt_file.cpp.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/c++   -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -std=gnu++11 -o CMakeFiles/app.dir/src/encrypt_file.cpp.o -c /data/lz/sgx_project_v2/App/src/encrypt_file.cpp
+[  5%] Building CXX object App/CMakeFiles/app.dir/src/main.cpp.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/c++   -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -std=gnu++11 -o CMakeFiles/app.dir/src/main.cpp.o -c /data/lz/sgx_project_v2/App/src/main.cpp
+[  7%] Building CXX object App/CMakeFiles/app.dir/src/openssl_crypto.cpp.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/c++   -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -std=gnu++11 -o CMakeFiles/app.dir/src/openssl_crypto.cpp.o -c /data/lz/sgx_project_v2/App/src/openssl_crypto.cpp
+[  8%] Building CXX object App/CMakeFiles/app.dir/src/sgx_err.cpp.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/c++   -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -std=gnu++11 -o CMakeFiles/app.dir/src/sgx_err.cpp.o -c /data/lz/sgx_project_v2/App/src/sgx_err.cpp
+[ 10%] Building C object App/CMakeFiles/app.dir/src/activation_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/activation_layer.c.o   -c /data/lz/sgx_project_v2/App/src/activation_layer.c
+[ 12%] Building C object App/CMakeFiles/app.dir/src/activations.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/activations.c.o   -c /data/lz/sgx_project_v2/App/src/activations.c
+[ 14%] Building C object App/CMakeFiles/app.dir/src/avgpool_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/avgpool_layer.c.o   -c /data/lz/sgx_project_v2/App/src/avgpool_layer.c
+[ 15%] Building C object App/CMakeFiles/app.dir/src/base64.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/base64.c.o   -c /data/lz/sgx_project_v2/App/src/base64.c
+[ 17%] Building C object App/CMakeFiles/app.dir/src/batchnorm_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/batchnorm_layer.c.o   -c /data/lz/sgx_project_v2/App/src/batchnorm_layer.c
+[ 19%] Building C object App/CMakeFiles/app.dir/src/blas.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/blas.c.o   -c /data/lz/sgx_project_v2/App/src/blas.c
+[ 21%] Building C object App/CMakeFiles/app.dir/src/classifier.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/classifier.c.o   -c /data/lz/sgx_project_v2/App/src/classifier.c
+[ 22%] Building C object App/CMakeFiles/app.dir/src/col2im.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/col2im.c.o   -c /data/lz/sgx_project_v2/App/src/col2im.c
+[ 24%] Building C object App/CMakeFiles/app.dir/src/connected_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/connected_layer.c.o   -c /data/lz/sgx_project_v2/App/src/connected_layer.c
+[ 26%] Building C object App/CMakeFiles/app.dir/src/convolutional_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/convolutional_layer.c.o   -c /data/lz/sgx_project_v2/App/src/convolutional_layer.c
+[ 28%] Building C object App/CMakeFiles/app.dir/src/cost_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/cost_layer.c.o   -c /data/lz/sgx_project_v2/App/src/cost_layer.c
+[ 29%] Building C object App/CMakeFiles/app.dir/src/data.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/data.c.o   -c /data/lz/sgx_project_v2/App/src/data.c
+[ 31%] Building C object App/CMakeFiles/app.dir/src/dropout_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/dropout_layer.c.o   -c /data/lz/sgx_project_v2/App/src/dropout_layer.c
+[ 33%] Building C object App/CMakeFiles/app.dir/src/e_backward.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/e_backward.c.o   -c /data/lz/sgx_project_v2/App/src/e_backward.c
+[ 35%] Building C object App/CMakeFiles/app.dir/src/e_forward.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/e_forward.c.o   -c /data/lz/sgx_project_v2/App/src/e_forward.c
+[ 36%] Building C object App/CMakeFiles/app.dir/src/forward.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/forward.c.o   -c /data/lz/sgx_project_v2/App/src/forward.c
+[ 38%] Building C object App/CMakeFiles/app.dir/src/gemm.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/gemm.c.o   -c /data/lz/sgx_project_v2/App/src/gemm.c
+[ 40%] Building C object App/CMakeFiles/app.dir/src/im2col.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/im2col.c.o   -c /data/lz/sgx_project_v2/App/src/im2col.c
+[ 42%] Building C object App/CMakeFiles/app.dir/src/image.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/image.c.o   -c /data/lz/sgx_project_v2/App/src/image.c
+[ 43%] Building C object App/CMakeFiles/app.dir/src/layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/layer.c.o   -c /data/lz/sgx_project_v2/App/src/layer.c
+[ 45%] Building C object App/CMakeFiles/app.dir/src/list.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/list.c.o   -c /data/lz/sgx_project_v2/App/src/list.c
+[ 47%] Building C object App/CMakeFiles/app.dir/src/local_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/local_layer.c.o   -c /data/lz/sgx_project_v2/App/src/local_layer.c
+[ 49%] Building C object App/CMakeFiles/app.dir/src/matrix.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/matrix.c.o   -c /data/lz/sgx_project_v2/App/src/matrix.c
+[ 50%] Building C object App/CMakeFiles/app.dir/src/maxpool_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/maxpool_layer.c.o   -c /data/lz/sgx_project_v2/App/src/maxpool_layer.c
+[ 52%] Building C object App/CMakeFiles/app.dir/src/md5.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/md5.c.o   -c /data/lz/sgx_project_v2/App/src/md5.c
+[ 54%] Building C object App/CMakeFiles/app.dir/src/network.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/network.c.o   -c /data/lz/sgx_project_v2/App/src/network.c
+[ 56%] Building C object App/CMakeFiles/app.dir/src/normalization_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/normalization_layer.c.o   -c /data/lz/sgx_project_v2/App/src/normalization_layer.c
+[ 57%] Building C object App/CMakeFiles/app.dir/src/option_list.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/option_list.c.o   -c /data/lz/sgx_project_v2/App/src/option_list.c
+[ 59%] Building C object App/CMakeFiles/app.dir/src/parser.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/parser.c.o   -c /data/lz/sgx_project_v2/App/src/parser.c
+[ 61%] Building C object App/CMakeFiles/app.dir/src/rc4.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/rc4.c.o   -c /data/lz/sgx_project_v2/App/src/rc4.c
+[ 63%] Building C object App/CMakeFiles/app.dir/src/softmax_layer.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/softmax_layer.c.o   -c /data/lz/sgx_project_v2/App/src/softmax_layer.c
+[ 64%] Building C object App/CMakeFiles/app.dir/src/test.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/test.c.o   -c /data/lz/sgx_project_v2/App/src/test.c
+[ 66%] Building C object App/CMakeFiles/app.dir/src/tree.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/tree.c.o   -c /data/lz/sgx_project_v2/App/src/tree.c
+[ 68%] Building C object App/CMakeFiles/app.dir/src/utils.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/utils.c.o   -c /data/lz/sgx_project_v2/App/src/utils.c
+[ 70%] Building C object App/CMakeFiles/app.dir/src/Enclave_u.c.o
+cd /data/lz/sgx_project_v2/build/App && /usr/bin/cc  -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/App/include -I/data/lz/sgxsdk/include  -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp   -D DEBUG -o CMakeFiles/app.dir/src/Enclave_u.c.o   -c /data/lz/sgx_project_v2/App/src/Enclave_u.c
+[ 71%] Linking CXX executable ../app
+cd /data/lz/sgx_project_v2/build/App && /usr/local/bin/cmake -E cmake_link_script CMakeFiles/app.dir/link.txt --verbose=1
+/usr/bin/c++   -m64 -O0 -g -Wno-unused-result  -fPIC -Wno-attributescmake -fopenmp  -rdynamic CMakeFiles/app.dir/src/encrypt_file.cpp.o CMakeFiles/app.dir/src/main.cpp.o CMakeFiles/app.dir/src/openssl_crypto.cpp.o CMakeFiles/app.dir/src/sgx_err.cpp.o CMakeFiles/app.dir/src/activation_layer.c.o CMakeFiles/app.dir/src/activations.c.o CMakeFiles/app.dir/src/avgpool_layer.c.o CMakeFiles/app.dir/src/base64.c.o CMakeFiles/app.dir/src/batchnorm_layer.c.o CMakeFiles/app.dir/src/blas.c.o CMakeFiles/app.dir/src/classifier.c.o CMakeFiles/app.dir/src/col2im.c.o CMakeFiles/app.dir/src/connected_layer.c.o CMakeFiles/app.dir/src/convolutional_layer.c.o CMakeFiles/app.dir/src/cost_layer.c.o CMakeFiles/app.dir/src/data.c.o CMakeFiles/app.dir/src/dropout_layer.c.o CMakeFiles/app.dir/src/e_backward.c.o CMakeFiles/app.dir/src/e_forward.c.o CMakeFiles/app.dir/src/forward.c.o CMakeFiles/app.dir/src/gemm.c.o CMakeFiles/app.dir/src/im2col.c.o CMakeFiles/app.dir/src/image.c.o CMakeFiles/app.dir/src/layer.c.o CMakeFiles/app.dir/src/list.c.o CMakeFiles/app.dir/src/local_layer.c.o CMakeFiles/app.dir/src/matrix.c.o CMakeFiles/app.dir/src/maxpool_layer.c.o CMakeFiles/app.dir/src/md5.c.o CMakeFiles/app.dir/src/network.c.o CMakeFiles/app.dir/src/normalization_layer.c.o CMakeFiles/app.dir/src/option_list.c.o CMakeFiles/app.dir/src/parser.c.o CMakeFiles/app.dir/src/rc4.c.o CMakeFiles/app.dir/src/softmax_layer.c.o CMakeFiles/app.dir/src/test.c.o CMakeFiles/app.dir/src/tree.c.o CMakeFiles/app.dir/src/utils.c.o CMakeFiles/app.dir/src/Enclave_u.c.o  -o ../app   -L/data/lz/sgxsdk/lib64  -Wl,-rpath,/data/lz/sgxsdk/lib64:/usr/local/lib -lsgx_urts_sim -lpthread -lsgx_uae_service_sim /usr/local/lib/libssl.so /usr/local/lib/libcrypto.so 
+make[3]: Leaving directory '/data/lz/sgx_project_v2/build'
+[ 71%] Built target app
+make -f Enclave/CMakeFiles/enclave.dir/build.make Enclave/CMakeFiles/enclave.dir/depend
+make[3]: Entering directory '/data/lz/sgx_project_v2/build'
+[ 73%] generate trust briage functions
+cd /data/lz/sgx_project_v2/build/Enclave && cd /data/lz/sgx_project_v2/Enclave/src && /data/lz/sgxsdk/bin/x64/sgx_edger8r --trusted /data/lz/sgx_project_v2/Enclave/edls/Enclave.edl --search-path /data/lz/sgx_project_v2/Enclave/edls --search-path /data/lz/sgxsdk/include && mv Enclave_t.h ../include/
+cd /data/lz/sgx_project_v2/build && /usr/local/bin/cmake -E cmake_depends "Unix Makefiles" /data/lz/sgx_project_v2 /data/lz/sgx_project_v2/Enclave /data/lz/sgx_project_v2/build /data/lz/sgx_project_v2/build/Enclave /data/lz/sgx_project_v2/build/Enclave/CMakeFiles/enclave.dir/DependInfo.cmake --color=
+Scanning dependencies of target enclave
+make[3]: Leaving directory '/data/lz/sgx_project_v2/build'
+make -f Enclave/CMakeFiles/enclave.dir/build.make Enclave/CMakeFiles/enclave.dir/build
+make[3]: Entering directory '/data/lz/sgx_project_v2/build'
+[ 75%] Building C object Enclave/CMakeFiles/enclave.dir/src/aes.c.o
+cd /data/lz/sgx_project_v2/build/Enclave && /usr/bin/cc -Denclave_EXPORTS -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/Enclave/include -I/data/lz/sgxsdk/include -I/data/lz/sgxsdk/include/tlibc -I/data/lz/sgxsdk/include/libcxx  -m64 -O0 -g -Wno-unused-result  -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -fstack-protector-strong -fPIC   -D DEBUG -o CMakeFiles/enclave.dir/src/aes.c.o   -c /data/lz/sgx_project_v2/Enclave/src/aes.c
+[ 77%] Building C object Enclave/CMakeFiles/enclave.dir/src/blas.c.o
+cd /data/lz/sgx_project_v2/build/Enclave && /usr/bin/cc -Denclave_EXPORTS -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/Enclave/include -I/data/lz/sgxsdk/include -I/data/lz/sgxsdk/include/tlibc -I/data/lz/sgxsdk/include/libcxx  -m64 -O0 -g -Wno-unused-result  -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -fstack-protector-strong -fPIC   -D DEBUG -o CMakeFiles/enclave.dir/src/blas.c.o   -c /data/lz/sgx_project_v2/Enclave/src/blas.c
+[ 78%] Building C object Enclave/CMakeFiles/enclave.dir/src/e_activation.c.o
+cd /data/lz/sgx_project_v2/build/Enclave && /usr/bin/cc -Denclave_EXPORTS -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/Enclave/include -I/data/lz/sgxsdk/include -I/data/lz/sgxsdk/include/tlibc -I/data/lz/sgxsdk/include/libcxx  -m64 -O0 -g -Wno-unused-result  -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -fstack-protector-strong -fPIC   -D DEBUG -o CMakeFiles/enclave.dir/src/e_activation.c.o   -c /data/lz/sgx_project_v2/Enclave/src/e_activation.c
+[ 80%] Building C object Enclave/CMakeFiles/enclave.dir/src/e_gemm.c.o
+cd /data/lz/sgx_project_v2/build/Enclave && /usr/bin/cc -Denclave_EXPORTS -I/data/lz/sgx_project_v2/common -I/data/lz/sgx_project_v2/Enclave/include -I/data/lz/sgxsdk/include -I/data/lz/sgxsdk/include/tlibc -I/data/lz/sgxsdk/include/libcxx  -m64 -O0 -g -Wno-unused-result  -nostdinc -fvisibility=hidden -fpie -ffunction-sections -fdata-sections -fstack-protector-strong -fPIC   -D DEBUG -o CMakeFiles/enclave.dir/src/e_gemm.c.o   -c /data/lz/sgx_project_v2/Enclave/src/e_gemm.c
+Enclave/CMakeFiles/enclave.dir/build.make:111: recipe for target 'Enclave/CMakeFiles/enclave.dir/src/e_gemm.c.o' failed
+make[3]: Leaving directory '/data/lz/sgx_project_v2/build'
+CMakeFiles/Makefile2:173: recipe for target 'Enclave/CMakeFiles/enclave.dir/all' failed
+make[2]: Leaving directory '/data/lz/sgx_project_v2/build'
+Makefile:86: recipe for target 'all' failed
+make[1]: Leaving directory '/data/lz/sgx_project_v2/build'
+Makefile:7: recipe for target 'all' failed

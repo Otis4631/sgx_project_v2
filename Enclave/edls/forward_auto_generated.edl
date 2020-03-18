@@ -1,0 +1,20 @@
+
+// AUTO-GENERATED, DO NOT EDIT IT
+enclave{
+    trusted{
+        public void ecall_forward_local_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_cost_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_convolutional_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_maxpool_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_avgpool_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_activation_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_softmax_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_dropout_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_batchnorm_layer(ecall_layer l, ecall_network net);
+	public void ecall_forward_normalization_layer(ecall_layer layer, ecall_network net);
+	public void ecall_forward_connected_layer(ecall_layer l, ecall_network net);
+    };
+    untrusted{
+        
+    };
+};
