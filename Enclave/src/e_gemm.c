@@ -2,7 +2,8 @@
 #include <math.h>
 #include "e_gemm.h"
 #include "Enclave_t.h"
-#include "enclave.h"
+
+
 /*
 ** 该函数只是调用了gemm_cpu()函数，并且将参数原封不动的传给gemm_cpu()
 */
@@ -31,7 +32,6 @@ void gemm_nn(int M, int N, int K, float ALPHA,
 {
     #pragma omp parallel for
     for(int i = 0; i < M; ++i){
-        printf("%d\n", omp_get_num_threads());
         for(int k = 0; k < K; ++k){
             register float A_PART = ALPHA*A[i*lda+k];
             for(int j = 0; j < N; ++j){
