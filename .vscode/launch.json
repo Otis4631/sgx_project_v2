@@ -17,9 +17,9 @@
             "name": "client",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/client/client",
+            "program": "${workspaceFolder}/build/client.bin",
             "args": [
-                "models/alexnet.pt"
+                "train"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

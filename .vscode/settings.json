@@ -86,7 +86,14 @@
         "dropout_layer.h": "c",
         "stdint.h": "c",
         "enclave_t.h": "c",
-        "enclave.h": "c"
+        "enclave.h": "c",
+        "app.h": "c",
+        "__bit_reference": "cpp",
+        "map": "cpp",
+        "set": "cpp",
+        "csignal": "cpp",
+        "*.ipp": "cpp",
+        "codecvt": "cpp"
     },
     "git.ignoreLimitWarning": true,
     "python.pythonPath": "/usr/bin/python",

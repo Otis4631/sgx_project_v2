@@ -42,7 +42,9 @@ typedef enum {
 } data_type;
 
 typedef struct load_args{
-    FILE * csv_path;
+    FILE* fp;
+    int random;
+    char* csv_path;
     int threads;
     char **paths;
     char *path;

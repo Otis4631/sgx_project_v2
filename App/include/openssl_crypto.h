@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>

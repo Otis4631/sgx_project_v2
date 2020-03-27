@@ -1,42 +1,60 @@
 enclave{
     // 方向属性只能加在strcut上，无法加载member上
      include "types.h"
-     struct test{
-         [in, out, count = arr_len]int * arr;
-         size_t arr_len;
+
+    struct fast_in {
+        [count = input_len] float* input;
+        size_t input_len;
+        size_t batch;
+        size_t h,
+        size_t c,
+        size_t w,
+
+
+        [count = weights_len] float* weights;
+        size_t weights_len;
+
+        [count = biases_len] float* biases;
+        size_t biases_len;
+
+        [count = biases_len] LAYER_TYPE* layer_types;
+        size_t layer_types_len
     };
-     struct ecall_layer{
-         size_t batch;
-         size_t inputs;
-         size_t outputs;
-         size_t h;
-         size_t w;
-         size_t c;
-         size_t out_h;
-         size_t out_w;
-         size_t out_c;
 
-         int batch_normalize;
-         ACTIVATION a;
 
-         size_t input_len;
-         [count=input_len]       float* input;
+
+    //  struct ecall_layer{
+    //      size_t batch;
+    //      size_t inputs;
+    //      size_t outputs;
+    //      size_t h;
+    //      size_t w;
+    //      size_t c;
+    //      size_t out_h;
+    //      size_t out_w;
+    //      size_t out_c;
+
+    //      int batch_normalize;
+    //      ACTIVATION a;
+
+    //      size_t input_len;
+    //      [count=input_len]       float* input;
         
-         size_t output_len;
-         [count=output_len]    float* output;
+    //      size_t output_len;
+    //      [count=output_len]    float* output;
 
-         size_t weights_len;
-         [count=weight_len]      float* weights;
+    //      size_t weights_len;
+    //      [count=weight_len]      float* weights;
         
-         size_t bias_len;
-         [count=bias_len]        float* biases;
+    //      size_t bias_len;
+    //      [count=bias_len]        float* biases;
         
-         size_t rolling_len;
-         [count=rolling_len]    float* rolling_mean;
-         [count=rolling_len]    float* rolling_variance;
+    //      size_t rolling_len;
+    //      [count=rolling_len]    float* rolling_mean;
+    //      [count=rolling_len]    float* rolling_variance;
 
-         size_t x_len;
-         [count=x_len]      float* x;
-         [count=x_len]      float* x_norm;
-         };
+    //      size_t x_len;
+    //      [count=x_len]      float* x;
+    //      [count=x_len]      float* x_norm;
+    //      };
 };

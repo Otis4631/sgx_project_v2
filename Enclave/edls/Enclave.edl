@@ -1,7 +1,6 @@
 enclave {
     include "types.h"
     from "Enclave_backward.edl" import *;
-    from "types.edl" import *;
     from "Enclave_forward.edl" import *;
     from "sgx_pthread.edl" import *;
     from "sgx_tstdc.edl" import *;

@@ -2,6 +2,8 @@
 *.d
 *.zip
 backup
+logs
+
 # Compiled Object files
 *.slo
 *.lo
@@ -31,6 +33,8 @@ backup
 *.exe
 *.out
 *.app
+*.bin
+
 core
 application
 build

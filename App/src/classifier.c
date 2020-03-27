@@ -93,17 +93,20 @@ void predict_csv(network* net, list* data_options) {
     fclose(fp);
 }
 
-void train_csv(network* net, list* data_options) {
-    char *base = "mynet";
-    char *backup_directory = option_find_str(data_options, "backup", "backup");
+
+load_args data_preparation(network* net, list* data_options) {
+    load_args arg = {0};
+    long N = option_find_long(data_options, "size", 0);
+
     char *label_filename = option_find_str(data_options, "labels", "data/labels.list");
-    char *train_filename = option_find_str(data_options, "train", "data/train.list");
+    char *train_filename = option_find_str(data_options, "data_path", "data/train.list");
     int normalize = option_find_int_quiet(data_options, "normalize", 1);
     int classes = option_find_int(data_options, "classes", 2);
-    long N = option_find_long(data_options, "size", 0);
     int encrypt = option_find_int(data_options, "encrypt", 0);
+    int random = option_find_int_quiet(data_options, "random", 0);
     load_args args = {0};
-    args.csv_path = fopen(train_filename, "r");
+    args.fp = fopen(train_filename, "r");
+    args.csv_path = train_filename;
     args.w = net->w;
     args.h = net->h;
     args.n = net->batch;
@@ -113,10 +116,19 @@ void train_csv(network* net, list* data_options) {
     args.threads = 1;
     args.type = CSV_DATA;
     args.c = net->c;
-    data train;
-    data buffer;
+    args.random = random;
+    data *buffer = calloc(1, sizeof(data));
+    args.d = buffer;
+    return args;
+}
+
+void train_csv(network* net, list* data_options) {
+    char *base = "mynet";
+    char *backup_directory = option_find_str(data_options, "backup", "backup");
     pthread_t load_thread;
-    args.d = &buffer;
+    load_args args = data_preparation(net, data_options);
+    long N = args.m;
+    data train;
     struct timeval t0, t1, t2;
     double timeuse, load_data_time;
     time_t tt;
@@ -127,7 +139,7 @@ void train_csv(network* net, list* data_options) {
         load_thread = load_data(args);
         gettimeofday(&t0, NULL);
         pthread_join(load_thread, 0);
-        train = buffer;
+        train = *args.d;
         gettimeofday(&t1, NULL);
         load_data_time = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec)/1000000.0;
         tt = clock();
@@ -139,7 +151,9 @@ void train_csv(network* net, list* data_options) {
         time_sum += timeuse;
         printf("Epoch: %d, Batch: %d, Loss: %g, Learning Rate: %g, Time used of Data Loading %.3fs, Time used of Training %.3fs/%.3fs, Image Processed: %d\n",
         epoch, get_current_batch(net), loss, get_current_rate(net), load_data_time, timeuse, ttused,  *net->seen);
+        
         free_data(train);
+        
         if(*net->seen / N > epoch){
             epoch = *net->seen / N;
             char buff[256];
@@ -147,19 +161,14 @@ void train_csv(network* net, list* data_options) {
             save_weights(*net, buff);
         }
     }
-    // pthread_join(load_thread, 0);
-    // net->input = buffer.X.vals[0];
 
-    // forward_network(net);
-    // float *out = net->output;
-    // crypt_aux(pass, pass_len, (unsigned char *)out, sizeof(float), 1);
-    // printf("OUT:%f\n", *out);
     char buff[256];
     sprintf(buff, "%s/%s.weights", backup_directory, base);
     printf("Average time used: %.3fs\n", time_sum / get_current_batch(net));
     save_weights(*net, buff);
     free_network(*net);
     free_list(data_options);
+    fclose(args.fp);
     
     //free(base);
 

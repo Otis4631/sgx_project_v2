@@ -1,15 +1,11 @@
-#include "Enclave_u.h"
-#include "sgx_urts.h"
+
 #include <stdio.h>
 #include <time.h>
 #include <iostream>
 #include <sgx_uswitchless.h>
-#include "sgx_err.h"
-#include "classifier.h"
-#include "encrypt_file.h"
 #include "openssl_crypto.h"
 extern "C" {
-    #include "utils.h"
+    #include "App_c.h"
 }
 
 using namespace std;
@@ -69,11 +65,11 @@ int destory_enclave(sgx_enclave_id_t *eid = &EID)
     return 0;
 }
 
-void encrypt() {
-    unsigned char passwd[] = "lizheng";
-    encrypt_csv("data/train.csv", "data/e_train.csv",(unsigned char *)passwd, sizeof(passwd));
-    decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
-}
+// void encrypt() {
+//     unsigned char passwd[] = "lizheng";
+//     encrypt_csv("data/train.csv", "data/e_train.csv",(unsigned char *)passwd, sizeof(passwd));
+//     decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
+// }
 
 int main(int argc, char ** argv){
     if(argc < 3){

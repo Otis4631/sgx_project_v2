@@ -60,8 +60,6 @@ def c_function_regex(function_name):
     reg = r"""%s\s+%s\s*\(.*\)(\s*|\n*)\{(.|\n|\r|\v)*?\n*((\}(\n|\s)*(?=(%s\s+\w+\(.*\))))|(\}(#\w)*$))""" % (
         c_type, function_name, c_type)
     return reg
-
-
 # declare_list:
     # [0] return type
     # [1] function name
