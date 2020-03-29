@@ -12,7 +12,7 @@ set(SGX_ENCLAVE_SIGNER ${SGX_SDK}/bin/x64/sgx_sign) #以上的参数都是根据
 set(CMAKE_CXX_STANDARD 11)
 
 set(OPENMP 1)
-set(SGX_DNNL 0)
+set(SGX_DNNL 1)
 set(SHARED 0)
 set(SGX_DEBUG 1)
 
@@ -48,7 +48,7 @@ endif()
 
 # add_subdirectory(App)                           #执行App文件夹中的CMakeLists.txt
 # add_subdirectory(Enclave)                       #执行Enclave文件夹中的CMakeLists.txt
-add_subdirectory(client)
+add_subdirectory(communication)
 # add_subdirectory(server)
 
 

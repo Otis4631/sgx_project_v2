@@ -4,7 +4,7 @@ enclave {
     from "Enclave_forward.edl" import *;
     from "sgx_pthread.edl" import *;
     from "sgx_tstdc.edl" import *;
-
+    
     trusted{
        public int init_crypto(  [in, count = n_len]     uint8_t* n, size_t n_len, 
                                 [in, count = e_len]     uint8_t* e, size_t e_len,
@@ -12,7 +12,6 @@ enclave {
                                 [out, count=iv_len]     uint8_t* iv, size_t iv_len);
         public void test ([in, out, count = n] uint8_t* p, size_t n);
     };
-    
     untrusted {
         void ocall_print_string([in, string] const char *str);
         void ocall_print_string2hex([in, count=n]const char *str, int n);

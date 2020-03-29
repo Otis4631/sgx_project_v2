@@ -49,7 +49,6 @@ set(Enclave_Cpp_Flags "-Wno-narrowing ${Enclave_C_Flags} -std=c++11 -nostdinc++"
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${Enclave_C_Flags}")#设置Cmake编译C文件的编译选项
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Enclave_Cpp_Flags}")#设置CMake编译Cpp文件的编译选项
-set(CMAKE_SHARED_LINKER_FLAGS ${Enclave_Link_Flags})#设置共享库的链接选项
 LINK_DIRECTORIES(${SGX_LIBRARY_PATH})#共享库链接其他库的时候的搜索路径，此处是SDK中提供的静态库
 
 

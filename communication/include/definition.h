@@ -1,18 +1,23 @@
 #pragma once
 
-#define CLIENT_STAGE_INIT       0x0001
-#define CLIENT_STAGE_CRYPT      0x0002
+#define BUFF_SIZE          1024
 
-#define CLIENT_STAGE_UPLOAD     0x0004
-#define CLIENT_STAGE_DOWNLOAD   0x0008
-#define CLIENT_STAGE_WAITING    0x0010
+#define MIN_VERSION           1
 
-#define CLIENT_STAGE_DESTORYED  0x0020
+#define STAGE_INIT       0x0001
+#define STAGE_CRYPT      0x0002
+
+#define STAGE_UPLOAD     0x0004
+#define STAGE_DOWNLOAD   0x0008
+#define STAGE_WAITING    0x0010
+
+#define STAGE_DESTORYED  0x0020
 
 #define CRYPT_HEADER_SIZE       5
+#define HELLO_HEADER_SIZE       2
 /*
 +-----------------------------------------------+
-|       read one batch data file                |
+|       read one batch data                 |
 |       stage_init(send auth, build connection) |
 |       change stage to encrypt                 |
 +-----------------------------------------------+
@@ -48,13 +53,16 @@ Hello Format:
 +-------+-------+--------+
 |   1   |   1   |Variable|
 +-------+-------+--------+
-VER:        protocol version: 0x01
+VER:    protocol version: 0x01
 CMD:        
         0x01: client: send UID
+        0x0f: response ping
 
         0x11: server: UID is ok
         0x12: server: UID is not premited
+        0x1f: send ping
 
+        
 
 
 Crypt Exchange Format:
@@ -78,7 +86,6 @@ N_LEN:      n len of public key, 0 for others, correspondingly, e_len is data_le
 IV_LEN:     iv len of sym key, 0 for others, correspondingly, key_len. 
 
 Stream Format:
-
 */
 
  
@@ -86,8 +93,3 @@ Stream Format:
 #include <memory>
 #include <boost/asio.hpp>
 #include <boost/pointer_cast.hpp>
-
-
-#define BIND_FN(x)       boost::bind(x, shared_from_this())
-#define BIND_FN1(x,y)    boost::bind(x, shared_from_this(),y)
-#define BIND_FN2(x,y,z)  boost::bind(x, shared_from_this(),y,z)

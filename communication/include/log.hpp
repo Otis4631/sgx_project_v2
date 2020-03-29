@@ -41,6 +41,7 @@ enum severity_level
     Log_Warning,
     Log_Error,
 };
+typedef severity_level log_level;
 
 // The formatting logic for the severity level
 template< typename CharT, typename TraitsT >
@@ -68,8 +69,8 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(log_scope, "Scope", attrs::named_scope::value_type)
 
 void init_log();
 
-#define LOG_ERROR       BOOST_LOG_SEV(lg, Log_Error) 
-#define LOG_DEBUG       BOOST_LOG_SEV(lg, Log_Debug)
-#define LOG_NOTICE      BOOST_LOG_SEV(lg, Log_Notice) 
-#define LOG_NAME(x)     BOOST_LOG_NAMED_SCOPE(x)
+#define LOG_ERROR(x)       BOOST_LOG_SEV(x, Log_Error) 
+#define LOG_DEBUG(x)       BOOST_LOG_SEV(x, Log_Debug)
+#define LOG_NOTICE(x)      BOOST_LOG_SEV(x, Log_Notice) 
+#define LOG_NAME(x)        BOOST_LOG_NAMED_SCOPE(x)
 #endif

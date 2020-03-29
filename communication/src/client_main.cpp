@@ -1,13 +1,8 @@
-#include "parser.hpp"
-#include "log.hpp"
 #include <iostream>
 
-#include "all.h"
-
+#include "client_all.h"
 using namespace std;
 
-
-src::severity_logger< severity_level > lg;
 
 // int main(int argc, char *argv[]) {
 //     init_log();
@@ -30,8 +25,21 @@ src::severity_logger< severity_level > lg;
 //     return 0;
 // }
 
-
+class A {
+    public:
+        A(){cout << "fuck you\n";}
+        A(int a){cout << "fuck you too\n";}
+        void f() {cout << "member function\n";}
+};
 
 int main(){
+    src::severity_logger< severity_level > lg;
 
+    init_log();
+    string addr = "127.0.0.1";
+    int port = 2333;
+    string uid = "ajsd";
+    LOG_NAME("Main");
+    shared_ptr<ClientHandler> c(new ClientHandler(addr, port));
+    c->start(uid);
 }

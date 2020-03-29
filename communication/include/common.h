@@ -6,5 +6,3 @@
 #include "parser.hpp"
 #include "handler.h"
 
-
-#define BUFF_SIZE   1024

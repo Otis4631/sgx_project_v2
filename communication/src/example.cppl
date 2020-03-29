@@ -1,0 +1,101 @@
+class talk_to_client : public boost::enable_shared_from_this<talk_to_client>, boost::noncopyable
+{
+    talk_to_client() { ... }
+
+public:
+    typedef boost::system::error_code error_code;
+    typedef boost::shared_ptr<talk_to_client> ptr;
+    void start()
+    {
+        started_ = true;
+        clients.push_back(shared_from_this());
+        last_ping = boost::posix_time::microsec_clock::local_time();
+        do_read(); //首先，我们等待客户端连接
+    }
+    static ptr new_()
+    {
+        ptr new_(new talk_to_client);
+        return new_;
+    }
+    void stop()
+    {
+        if (!started_)
+            return;
+        started_ = false;
+        sock_.close();
+        ptr self = shared_from_this();
+        array::iterator it = std::find(clients.begin(), clients.end(), self);
+        clients.erase(it);
+        update_clients_changed();
+    }
+    bool started() const { return started_; }
+    ip::tcp::socket &sock() { return sock_; }
+    std::string username() const { return username_; }
+    void set_clients_changed() { clients_changed_ = true; }
+    void on_read(const error_code &err, size_t bytes)
+    {
+        if (err)
+            stop();
+        if (!started())
+            return;
+        std::string msg(read_buffer_, bytes);
+        if (msg.find("login ") == 0)
+            on_login(msg);
+        else if (msg.find("ping") == 0)
+            on_ping();
+        else if (msg.find("ask_clients") == 0)
+            on_clients();
+    }
+    void on_login(const std::string &msg)
+    {
+        std::istringstream in(msg);
+        in >> username_ >> username_;
+        do_write("login ok\n");
+        update_clients_changed();
+    }
+    void on_ping()
+    {
+        do_write(clients_changed_ ? "ping client_list_changed\n" : "ping ok\n");
+        clients_changed_ = false;
+    }
+    void on_clients()
+    {
+        std::string msg;
+        for (array::const_iterator b = clients.begin(), e = clients.end(); b != e; ++b)
+            msg += (*b)->username() + " ";
+        do_write("clients " + msg + "\n");
+    }
+    void do_ping() { do_write("ping\n"); }
+    void do_ask_clients() { do_write("ask_clients\n"); }
+    void on_write(const error_code &err, size_t bytes) { do_read(); }
+    void do_read()
+    {
+        async_read(sock_, buffer(read_buffer_), MEM_FN2(read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
+        post_check_ping();
+    }
+    void do_write(const std::string &msg)
+    {
+        if (!started())
+            return;
+        std::copy(msg.begin(), msg.end(), write_buffer_);
+        sock_.async_write_some(buffer(write_buffer_, msg.size()), MEM_FN2(on_write, _1, _2));
+    }
+    size_t read_complete(const boost::system::error_code &err, size_t bytes)
+    {
+        // ... 就像之前
+    }
+
+private:
+    ip::tcp::socket sock_;
+    enum
+    {
+        max_msg = 1024
+    };
+    char read_buffer_[max_msg];
+    char write_buffer_[max_msg];
+    bool started_;
+    std::string username_;
+    deadline_timer timer_;
+    boost::posix_time::ptime last_ping;
+    bool clients_changed_;
+};
