@@ -14,7 +14,7 @@ runs:
 	$(DEST_DIR)/$(S_EXE_NAME) $(SARGS)
 
 clean:
-	rm $(BUILD_DIR) -rf
+	rm -rf $(BUILD_DIR) 
 	rm -rf App/src/Enclave_u.c App/include/Enclave_u.h Enclave/src/Enclave_t.c Enclave/include/Enclave_t.h
 build:
 	mkdir $(BUILD_DIR);cd $(BUILD_DIR); cmake ..

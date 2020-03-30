@@ -16,7 +16,6 @@ set(SGX_DNNL 1)
 set(SHARED 0)
 set(SGX_DEBUG 1)
 
-
 # add_definitions(-D CRYPTO)
 #####################################################################################
 if(SGX_DEBUG EQUAL 1)
@@ -41,8 +40,20 @@ set(EDL_FILES_PATH ${PROJECT_SOURCE_DIR}/Enclave/edls)
 
 find_package(OpenSSL 1.1.0 REQUIRED)
 
+
+
+
 if(OPENMP EQUAL 1)
-   find_package(OpenMP REQUIRED)
+   if(APPLE)
+      set(OpenMP_CXX_FLAGS  -Xpreprocessor -fopenmp -I/usr/local/opt/libomp/include)
+      set(OpenMP_CXX_LIB_NAMES libomp)
+      set(OpenMP_libomp_LIBRARY  /usr/local/Cellar/libomp/9.0.1/lib/libomp.dylib)
+      find_package(OPENMP REQUIRED)
+   else()
+      find_package(OpenMP REQUIRED)
+
+   endif()
+
 endif()
 
 

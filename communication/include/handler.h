@@ -122,7 +122,7 @@ public:
 
     void send_ping() {
         gen_init_package(0x1f, "");
-        local_sock.async
+        
     }
 protected:
     asio::io_service service;

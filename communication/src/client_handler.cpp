@@ -16,6 +16,7 @@ void ClientHandler::do_write()
         return;
     if (stage == STAGE_INIT)
     {
+        gen_init_package(1, uid);
         asio::async_write(local_sock, write_buff.data(), BIND_FN2(on_write, _1, _2));
     }
 }
@@ -58,6 +59,7 @@ void ClientHandler::on_write(const b_error_code &ec, size_t size)
         LOG_ERROR(log) << "Error occured in on_write" << ec.message();
         stop();
     }
+    LOG_DEBUG(log) << "successfully write " << size << " bytes" << write_buff.data();
     write_buff.consume(size);
     if (stage == STAGE_INIT)
     {
@@ -84,7 +86,6 @@ void ClientHandler::on_connect_err(const b_error_code &err)
 void ClientHandler::start(string &_uid)
 {
     uid = _uid;
-    gen_init_package(1, uid);
     do_connect(peer_ep);
     run();
 }
