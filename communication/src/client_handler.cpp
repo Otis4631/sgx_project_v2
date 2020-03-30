@@ -47,7 +47,7 @@ void ClientHandler::on_read(const b_error_code &ec, size_t size)
     {
         if (!stage_init_read())
             stop();
-        stage == STAGE_CRYPT;
+        stage = STAGE_CRYPT;
     }
     do_write();
 }
@@ -59,8 +59,8 @@ void ClientHandler::on_write(const b_error_code &ec, size_t size)
         LOG_ERROR(log) << "Error occured in on_write" << ec.message();
         stop();
     }
-    LOG_DEBUG(log) << "successfully write " << size << " bytes" << write_buff.data();
-    write_buff.consume(size);
+    LOG_DEBUG(log) << "successfully write " << size << " bytes" << &write_buff;
+   // write_buff.consume(size);
     if (stage == STAGE_INIT)
     {
         do_read();
@@ -69,19 +69,19 @@ void ClientHandler::on_write(const b_error_code &ec, size_t size)
 
 void ClientHandler::on_connect(const b_error_code &err)
 {
-    if (err)
-        on_connect_err(err);
+    if (err) {
+        LOG_ERROR(log) << "Error occurred in connect " << err.message();
+        stop();
+        return ;
+    }
+        
     LOG_NOTICE(log) << "Connected successfully to " << peer_ep.address().to_string();
     if (stage == STAGE_INIT)
     {
         do_write();
     }
 }
-void ClientHandler::on_connect_err(const b_error_code &err)
-{
-    LOG_ERROR(log) << "Error occurred in connect " << err.message();
-    stop();
-}
+
 
 void ClientHandler::start(string &_uid)
 {
@@ -94,7 +94,7 @@ size_t ClientHandler::read_completion(const b_error_code &err, size_t bytes)
 {
     if (err)
     {
-        LOG_ERROR(log) << err.message();
+        LOG_ERROR(log) << "read completion: " << err.message();
         stop();
         return 0;
     }
@@ -122,7 +122,7 @@ bool ClientHandler::stage_init_read()
     }
     else if (cmd == 0x12)
     { // uid is incorrect
-        LOG_ERROR(log) << "UID is incorrect";
+        LOG_ERROR(log) << "from server: UID is incorrect";
     }
     else
         LOG_ERROR(log) << "Unknown cmd field in stage init";

@@ -14,7 +14,7 @@ void init_log()
         [
             expr::stream << "["<<expr::format_named_scope(log_scope,keywords::format = "%n") << "]"
         ]
-     << "<" << log_severity << ">" << "\t\t" << expr::message;
+     << "<" << log_severity << ">" << "\t" << expr::message;
 
     logging::add_common_attributes();
 

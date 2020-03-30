@@ -25,20 +25,13 @@ using namespace std;
 //     return 0;
 // }
 
-class A {
-    public:
-        A(){cout << "fuck you\n";}
-        A(int a){cout << "fuck you too\n";}
-        void f() {cout << "member function\n";}
-};
 
 int main(){
     src::severity_logger< severity_level > lg;
-
     init_log();
     string addr = "127.0.0.1";
     int port = 2333;
-    string uid = "ajsd";
+    string uid = "lizheng";
     LOG_NAME("Main");
     shared_ptr<ClientHandler> c(new ClientHandler(addr, port));
     c->start(uid);
