@@ -28,7 +28,7 @@ using namespace std;
 
 int main(){
     src::severity_logger< severity_level > lg;
-    init_log();
+    init_log("client_logs");
     string addr = "127.0.0.1";
     int port = 2333;
     string uid = "lizheng";

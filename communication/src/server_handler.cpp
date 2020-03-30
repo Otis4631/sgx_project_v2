@@ -14,15 +14,16 @@ void ServerHandler::start()
 void ServerHandler::on_write(const b_error_code &ec, size_t size) {
     if(ec) {do_stop(ec.message()); return ;}
     if(stage == STAGE_INIT) {
-        auto cb = write_buff.data();
-        std::string buff( boost::asio::buffers_begin(cb) + 1, boost::asio::buffers_end(cb));
-        char cmd = buff.c_str()[1];
-        if((cmd) == 0x11) // ok
-          {  
-            stage = STAGE_CRYPT;
-            LOG_DEBUG(log) << "on_write: change status to crypt";
-          }
-        else if((cmd) == 0x12) {
+        // auto cb = write_buff.data();
+        // string b64( boost::asio::buffers_begin(cb), boost::asio::buffers_end(cb));
+        // string res;
+        // b64_decode();
+        if((_cmd) == 0x11) // ok
+        {  
+        stage = STAGE_CRYPT;
+        LOG_DEBUG(log) << "on_write: change status to crypt";
+        }
+        else if((_cmd) == 0x12) {
             stage = STAGE_DESTORYED;
             LOG_DEBUG(log) << "on_write: change status to destoryed";
         }
@@ -38,7 +39,7 @@ void ServerHandler::do_read()
         return;
     if (stage == STAGE_INIT)
     {
-        asio::async_read(local_sock, read_buff, BIND_FN2(read_completion, _1, _2), BIND_FN2(on_read, _1, _2));
+        asio::async_read_until(local_sock, read_buff, '\n',BIND_FN2(on_read, _1, _2));
     }
 }
 
@@ -50,24 +51,12 @@ void ServerHandler::on_read(const b_error_code &ec, size_t size)
         LOG_ERROR(log) << "Error occurred " << ec.message();
         stop();
     }
-    read_buff.commit(size);
+    // read_buff.commit(size);
     if (stage == STAGE_INIT)
     {
-        istream in(&read_buff);
-        char ver, cmd;
-        string _uid;
-        in >> ver >> cmd >> _uid;
-        if (cmd == 0x01)
-        {
-            if(!auth_uid(_uid)) {
-                gen_init_package(0x12, ""); // uid is incorrect
-                LOG_ERROR(log) << ("uid is incorrect");
-            }
-            gen_init_package(0x11, ""); // uid is ok
-        }
-        else {
-            do_stop("Unknown command type in stage init");
-        }
+       if(!handle_init_read()) {
+        do_stop("Unknown command type in stage init");
+       }
     }
     do_write();
 }
@@ -104,11 +93,38 @@ size_t ServerHandler::read_completion(const b_error_code &err, size_t bytes)
 bool ServerHandler::auth_uid(string& s)
 {
     LOG_DEBUG(log) << "auth_id: " << s;
-    if(s == "lizheng") return true;
+    if(s == "lizheng") {
+        LOG_NOTICE(log) << "uid is correct";
+        return true;
+    };
+    LOG_NOTICE(log) << "uid is incorrect";
     return false;
 }
 
 void ServerHandler::do_stop(string e) {
     LOG_ERROR(log) << e;
     stop();
+}
+
+bool ServerHandler::handle_init_read() {
+        istream in(&read_buff);
+        char ver, cmd;
+        string read_data;
+        string out;
+        in >> read_data;
+        b64_decode(&out, read_data);
+        cmd = out[1];
+        string _uid = out.substr(2, out.size() - 2);
+
+        if (cmd == 0x01)
+        {
+            if(!auth_uid(_uid)) {
+                gen_init_package(0x12, ""); // uid is incorrect
+            }
+            gen_init_package(0x11, ""); // uid is ok
+        }
+        else {
+            return false;
+        }
+        return true;
 }

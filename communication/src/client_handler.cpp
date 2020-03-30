@@ -14,6 +14,9 @@ void ClientHandler::do_write()
 {
     if (stopping)
         return;
+    if(!write_buff.size()) {
+        LOG_DEBUG(log) << ("Noting to write");
+    }
     if (stage == STAGE_INIT)
     {
         gen_init_package(1, uid);
@@ -34,7 +37,7 @@ void ClientHandler::do_read()
         LOG_ERROR(log) << "Unknown stage status";
         stop();
     }
-    asio::async_read(local_sock, read_buff, BIND_FN2(read_completion, _1, _2), BIND_FN2(on_read, _1, _2));
+    asio::async_read_until(local_sock, read_buff, '\n', BIND_FN2(on_read, _1, _2));
     //asio::async_wait();
 }
 
@@ -42,11 +45,12 @@ void ClientHandler::on_read(const b_error_code &ec, size_t size)
 {
     if (check_err(ec))
         return;
-    read_buff.commit(size);
+
     if (stage == STAGE_INIT)
     {
         if (!stage_init_read())
             stop();
+        LOG_NOTICE(log) << "change status to crypt";
         stage = STAGE_CRYPT;
     }
     do_write();
@@ -113,7 +117,15 @@ bool ClientHandler::stage_init_read()
 {
     istream in(&read_buff);
     char version, cmd;
-    in >> version >> cmd;
+    string b64str;
+    in >> b64str;
+    string res;
+
+    b64_decode(&res, b64str);
+
+    version = res[0];
+    cmd = res[1];
+
     if (!check_version(version))
         return false;
     if (cmd == 0x11)

@@ -21,6 +21,8 @@ class ServerHandler: public Handler, public std::enable_shared_from_this<ServerH
         void start();
 
         void do_stop(string err_message);
+        bool handle_init_read();
+
 
         size_t read_completion(const b_error_code &err, size_t bytes);
 

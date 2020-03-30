@@ -1,6 +1,6 @@
 #include "log.hpp"
  
-void init_log()
+void init_log(const std::string & path)
 {
     logging::formatter formatter=
         expr::stream
@@ -27,7 +27,7 @@ void init_log()
         );
 
     file_sink->locked_backend()->set_file_collector(sinks::file::make_collector(
-        keywords::target="logs",        //文件夹名
+        keywords::target=path,        //文件夹名
         keywords::max_size=50*1024*1024,    //文件夹所占最大空间
         keywords::min_free_space=100*1024*1024  //磁盘最小预留空间
         ));

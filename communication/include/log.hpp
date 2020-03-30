@@ -67,7 +67,7 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(log_timestamp, "TimeStamp", boost::posix_time::ptime
 BOOST_LOG_ATTRIBUTE_KEYWORD(log_uptime, "Uptime", attrs::timer::value_type)
 BOOST_LOG_ATTRIBUTE_KEYWORD(log_scope, "Scope", attrs::named_scope::value_type)
 
-void init_log();
+void init_log(const std::string & path);
 
 #define LOG_ERROR(x)       BOOST_LOG_SEV(x, Log_Error) 
 #define LOG_DEBUG(x)       BOOST_LOG_SEV(x, Log_Debug)
