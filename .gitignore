@@ -4,7 +4,7 @@
 backup
 logs
 .DS_Store
-
+*_logs
 # Compiled Object files
 *.slo
 *.lo

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdint.h>
 #include <string>
 #include <boost/asio.hpp>
@@ -88,7 +89,7 @@ public:
         if (stopping)
             return;
         stopping = true;
-        LOG_NOTICE(log) << "Stopping Handler...";
+        LOG_NOTICE(this->log) << "Stopping Handler...";
         local_sock.close();
     }
 

@@ -16,23 +16,28 @@
 #define CRYPT_HEADER_SIZE       5
 #define HELLO_HEADER_SIZE       2
 /*
+one batch by one batch send and store
 +-----------------------------------------------+
-|       read one batch data                 |
-|       stage_init(send auth, build connection) |
-|       change stage to encrypt                 |
-+-----------------------------------------------+
-                    |
-+-----------------------------------------------+
-|       stage_encrypt(get sym key)              |
-|       encrypt data batch by batch)            |
-|       change stage to upload                  |
-+-----------------------------------------------+   
-                    |
-+-----------------------------------------------+
-|       stage_upload(upload one batch)          |
+|       read one batch data                     |
+|       stage_init(send auth, build connection) |<-------------------------------+
+|       change stage to encrypt                 |                                |
++-----------------------------------------------+                                |
+                    |                                                            |
+                    V                                                            |
++-----------------------------------------------+       +-------------------------------------------------------+
+|       stage_crypt(get sym key)                |       | stage_wait(wait until encrypt data finish)            |
+|       encrypt data batch by batch)            | —————>| handler sleep until be wakened                        |
+|       change stage to upload                  |       | change stage to init, upload according to connection  |
++-----------------------------------------------+       +-------------------------------------------------------+
+                                                                                |
+                                                                                |
+                                                                                |
++-----------------------------------------------+                               |
+|       stage_upload(upload one batch)          |<------------------------------+
 |       change stage to download                |
 +-----------------------------------------------+   
                     |
+                    V
 +-------------------------------------------------------+
 |       stage_download(wait for command)                |
 |       change stage to download, upload, wait, destrory|
@@ -46,6 +51,10 @@
 +-------------------------------------------------------+
 |       stage_destory(destory client)                   |
 +-------------------------------------------------------+  
+
+
+
+* ALL PACKAGE IS ENCODE BY BASE64 DUE TO ADD BORDER BUFFER '\n' *
 
 Hello Format:
 +-------+-------+--------+
@@ -64,13 +73,12 @@ CMD:
 
         
 
-
 Crypt Exchange Format:
-+-------+---------+-------+-------+-----------+-----------+
-|  VER  |   CMD   | K_LEN | N_LEN |  IV_LEN   |    DATA   |
-+-------+---------+-------+-------+-----------+-----------+
-|   1   |    1    |   1   |   1   |     1     |  Variable |
-+-------+---------+-------+-------+-----------+-----------+
++-------+-------+--------+---------+----------+
+|  VER  |  CMD  |  MODE  |  N_LEN  |   DATA   |
++-------+-------+--------+---------+----------+
+|   1   |   1   |   1    |    1    | Variable |
++-------+-------+--------+---------+----------+
 
 VER:        protocol version: 0x01
 CMD:
@@ -80,10 +88,14 @@ CMD:
     0x11:   server:  send the new key.
     0x12:   server:  return the key id works.
 
-size field denotes: x for 2^x, e.g. 0 for 2^0 = 1, 4 for 2^4 = 16
-K_LEN:      for symmetirc key is key_len + iv_len, for public key is n_len + e_len.
+MODE:
+    0x01: AES_128_GCM
+
+    0x81: RSA_OAEP
+
+
+size field denotes: x for x * 1024, e.g. 2 for 2 * 1024 = 2048
 N_LEN:      n len of public key, 0 for others, correspondingly, e_len is data_len - n_len. 
-IV_LEN:     iv len of sym key, 0 for others, correspondingly, key_len. 
 
 Stream Format:
 */

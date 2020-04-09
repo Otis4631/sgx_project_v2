@@ -18,7 +18,7 @@ int md5_encrypt(const void *data, size_t len, unsigned char *md5)
 {
     if (data == NULL || len <= 0 || md5 == NULL)
     {
-        printf("Input param invalid!\n");
+        //LOG_ERROR(lg) <<("Input param invalid!\n");
         return -1;
     }
     MD5_CTX pk_ctx;
@@ -97,7 +97,7 @@ int OpenSSLCrypto::init_status()
             enc = 0;
         else
         {
-            printf("Mode Error!\n");
+            LOG_ERROR(lg) <<("Mode Error!\n");
             return ERR_BAD_MODE;
         }
         if (EVP_CipherInit(sym_ctx, tmp_cipher, NULL, NULL, enc) <= 0)
@@ -138,10 +138,11 @@ OpenSSLCrypto::OpenSSLCrypto(int _mode) : mode(_mode)
 
 void OpenSSLCrypto::err_handle()
 {
+    LOG_NAME("Crypto");
     e = ERR_peek_last_error();
     char *c_err_str = (char *)ERR_reason_error_string(e);
     if (c_err_str)
-        printf("%s\n", c_err_str);
+        LOG_ERROR(lg) << c_err_str << endl;
     ERR_print_errors_fp(stderr);
     ERR_clear_error();
 }
@@ -153,7 +154,7 @@ int OpenSSLCrypto::open_public_key(const char *pub_key_file)
     fp = fopen(pub_key_file, "r");
     if (NULL == fp)
     {
-        printf("open_public_key: error on reading file!\n");
+        LOG_ERROR(lg) <<("open_public_key: error on reading file!\n");
         return ERR_OPEN_FAILED;
     }
 
@@ -183,7 +184,7 @@ int OpenSSLCrypto::open_public_key(const char *pub_key_file)
         return ERR_READ_FAILED;
     }
     EVP_PKEY_set1_RSA(pkey, rsa);
-    RSA_print_fp(stdout, rsa, 0);
+
     pk_ctx = EVP_PKEY_CTX_new(pkey, eng);
     if (NULL == pk_ctx)
     {
@@ -207,7 +208,7 @@ int OpenSSLCrypto::open_private_key(const char *file, const char *passwd)
     fp = fopen(file, "r");
     if (NULL == fp)
     {
-        printf("open_public_key: error on reading file!\n");
+        LOG_ERROR(lg) <<("open_public_key: error on reading file!\n");
         return ERR_OPEN_FAILED;
     }
     char *header = new char[1024]();
@@ -223,7 +224,7 @@ int OpenSSLCrypto::open_private_key(const char *file, const char *passwd)
     PEM_read_PrivateKey(fp, &pkey, NULL, NULL);
     if (NULL == pkey)
     {
-        printf("open_private_key EVP_PKEY_new failed\n");
+        LOG_ERROR(lg) <<("open_private_key EVP_PKEY_new failed\n");
         fclose(fp);
         fp = NULL;
         return ERR_READ_FAILED;
@@ -231,12 +232,12 @@ int OpenSSLCrypto::open_private_key(const char *file, const char *passwd)
     pk_ctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (NULL == pk_ctx)
     {
-        printf("failed to open pk_ctx.\n");
+        LOG_ERROR(lg) <<("failed to open pk_ctx.\n");
         return ERR_NEW_FAILED;
     }
     if (EVP_PKEY_decrypt_init(pk_ctx) <= 0)
     {
-        printf("ras_pubkey_encryptfailed to EVP_PKEY_encrypt_init.\n");
+        LOG_ERROR(lg) <<("ras_pubkey_encryptfailed to EVP_PKEY_encrypt_init.\n");
         return ERR_RUN_FAILED;
     }
     if (set_RSA_padding() < 0)
@@ -326,21 +327,6 @@ int OpenSSLCrypto::AES_crypt()
     *out_len = tmp_out_len;
     return 0;
 }
-
-// int OpenSSLCrypto::get_raw_private_key(uint8_t *priv, size_t *len)
-// {
-//     if (mode & CIPHER_RSA)
-//     {
-//         if(EVP_PKEY_get_raw_private_key(pkey, priv, len) <= 0) {
-//             err_handle();
-//             return ERR_RUN_FAILED;
-//         }
-//     }
-//     else
-//         return ERR_BAD_MODE;
-
-//     return 0;
-// }
 
 int OpenSSLCrypto::get_raw_public_key(uint8_t *n_c, size_t *n_len, uint8_t *e_c, size_t *e_len)
 {

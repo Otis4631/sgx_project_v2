@@ -8,11 +8,12 @@ find_package(Boost REQUIRED COMPONENTS
     system
     program_options
     log
-
 )
 add_definitions(-DBOOST_LOG_DYN_LINK)
 
-include_directories("include"  ${Boost_INCLUDE_DIRS})
+set(LIBRARY ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES})
+
+include_directories("include"  ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIRS})
 
 
 file(GLOB_RECURSE Client_Cpp_Files "*.cpp")
@@ -24,7 +25,7 @@ file(GLOB_RECURSE Server_Cpp_Files "*.cpp")
 list(FILTER Server_Cpp_Files EXCLUDE REGEX "client*")
 
 add_executable(${Client} ${Client_Cpp_Files})
-target_link_libraries(${Client} ${Boost_LIBRARIES})
+target_link_libraries(${Client} ${LIBRARY})
 
 add_executable(${Server} ${Server_Cpp_Files})
-target_link_libraries(${Server} ${Boost_LIBRARIES})
+target_link_libraries(${Server} ${LIBRARY})

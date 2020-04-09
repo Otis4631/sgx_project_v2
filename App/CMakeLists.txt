@@ -13,9 +13,7 @@ if(${OPENMP_FOUND})
     set(LIBRARY ${LIBRARY} ${OPENMP_LIBRARIES})
 endif()
 
-if(${OPENSSL_FOUND})
-    set(LIBRARY ${LIBRARY} ${OPENSSL_LIBRARIES})
-endif()
+
 
 set(APP_DIR ${PROJECT_SOURCE_DIR}/App)
 set(UNTRUSTED_BRIDGE ${APP_DIR}/src/Enclave_u.c ${APP_DIR}/include/Enclave_u.h)

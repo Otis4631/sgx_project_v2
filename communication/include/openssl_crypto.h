@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
@@ -7,6 +8,8 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+
+#include <log.hpp>
 
 using namespace std;
 
@@ -51,9 +54,12 @@ private:
     int mode;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pk_ctx = NULL;
+
     EVP_CIPHER_CTX *sym_ctx = NULL;
 
     RSA *rsa = NULL;
+
+
     ENGINE *eng = NULL;
     FILE *fp = NULL;
     BIO *bio = NULL;
@@ -72,6 +78,7 @@ private:
 
     const string pkcs1_header = "-----BEGIN RSA P";
     const string pkcs8_header = "-----BEGIN P";
+    log_t lg;
 };
 
 

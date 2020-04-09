@@ -42,6 +42,8 @@ enum severity_level
     Log_Error,
 };
 typedef severity_level log_level;
+typedef src::severity_logger< severity_level > log_t;
+
 
 // The formatting logic for the severity level
 template< typename CharT, typename TraitsT >

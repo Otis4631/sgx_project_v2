@@ -11,7 +11,6 @@
 
 #include "log.hpp"
 
-
 using namespace std;
 namespace bpo = boost::program_options;
 namespace bf = boost::filesystem;
@@ -26,8 +25,9 @@ inline int parse_cmd_line(int argc, char *argv[], map<string, string>& m)
     bpo::variables_map vm;
     opts.add_options()
         ("help,h", "help info")
-        ("command,m", bpo::value<string>(), "main command, must be one of train, inference")
-        ("config,c", bpo::value<string>(&c) -> default_value("cfg/config"), "specify the configure file path"); // 默认值
+        ("command,m", bpo::value<string>(), "main command, must be one of train, inference or upload")
+        ("img_path,s", bpo::value<string>(), "inference one single image")
+        ("config,c", bpo::value<string>(), "specify the configure file path"); // 默认值
 
     bpo::positional_options_description p;
     p.add("command", -1);
@@ -44,21 +44,21 @@ inline int parse_cmd_line(int argc, char *argv[], map<string, string>& m)
     if (vm.count("help"))
     {
         cout << opts << endl;
-        return -1;
+        exit(0);
     }
     
-    if(vm.count("command")) {
+    if(vm.count("command") && vm.count("config")) {
         m["command"] = vm["command"].as<string>();
+        m["config"] = vm["config"].as<string>();
     }
     else {
-        BOOST_LOG_SEV(lg, Log_Error) << "command not set" ;
+        BOOST_LOG_SEV(lg, Log_Error) << "command or config not set";
         cout << opts << endl;
         return -1;
     }
-
-    m["config"] = c;
     return 0;
 }
+
 
 inline int parse_cmd_line_s(int argc, char *argv[], map<string, string>& m)
 {

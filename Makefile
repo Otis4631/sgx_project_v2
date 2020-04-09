@@ -1,7 +1,7 @@
 BUILD_DIR = ./build
 DEST_DIR = ./build
 C_EXE_NAME = client.bin
-CARGS =  train # /data/lz/sgx_project_v2/data/train.cfg /data/lz/sgx_project_v2/cfg/e_mynet.cfg
+CARGS =  train -c cfg/client.cfg # /data/lz/sgx_project_v2/data/train.cfg /data/lz/sgx_project_v2/cfg/e_mynet.cfg
 
 S_EXE_NAME = server.bin
 SARGS = -c cfg/server.cfg 
