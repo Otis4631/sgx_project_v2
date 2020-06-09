@@ -109,7 +109,8 @@
         "stack": "cpp",
         "__sgx_mutex_base": "cpp",
         "sgx_condition_variable": "cpp",
-        "sgx_mutex": "cpp"
+        "sgx_mutex": "cpp",
+        "app_c.h": "c"
     },
     "git.ignoreLimitWarning": true,
     "python.pythonPath": "/usr/bin/python",

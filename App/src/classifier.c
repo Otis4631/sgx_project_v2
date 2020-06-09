@@ -174,6 +174,7 @@ void train_csv(network* net, list* data_options) {
 
 }
 
+
 void train(char *datacfg, char *cfgfile, char *weightfile) {
     network net = load_network(cfgfile, weightfile, 1);
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.batch, net.decay);
@@ -342,8 +343,6 @@ void validate_classifier_10(char *datacfg, char *filename, char *weightfile)
         printf("%d: top 1: %f, top %d: %f\n", i, avg_acc/(i+1), topk, avg_topk/(i+1));
     }
 }
-
-
 
 
 void validate_classifier_single(char *datacfg, char *filename, char *weightfile)
@@ -589,99 +588,6 @@ void label_classifier(char *datacfg, char *filename, char *weightfile)
 }
 
 
-void test_classifier(char *datacfg, char *cfgfile, char *weightfile, int target_layer)
-{
-    int curr = 0;
-    network net = parse_network_cfg(cfgfile);
-    if(weightfile){
-        load_weights(&net, weightfile);
-    }
-    srand(time(0));
 
-    list *options = read_data_cfg(datacfg);
-
-    char *test_list = option_find_str(options, "test", "data/test.list");
-    int classes = option_find_int(options, "classes", 2);
-
-    list *plist = get_paths(test_list);
-
-    char **paths = (char **)list_to_array(plist);
-    int m = plist->size;
-    free_list(plist);
-
-    clock_t time;
-
-    data val, buffer;
-
-    load_args args = {0};
-    args.w = net.w;
-    args.h = net.h;
-    args.paths = paths;
-    args.classes = classes;
-    args.n = net.batch;
-    args.m = 0;
-    args.labels = 0;
-    args.d = &buffer;
-    args.type = OLD_CLASSIFICATION_DATA;
-
-    pthread_t load_thread = load_data_in_thread(args);
-    for(curr = net.batch; curr < m; curr += net.batch){
-        time=clock();
-
-        pthread_join(load_thread, 0);
-        val = buffer;
-
-        if(curr < m){
-            args.paths = paths + curr;
-            if (curr + net.batch > m) args.n = m - curr;
-            load_thread = load_data_in_thread(args);
-        }
-        fprintf(stderr, "Loaded: %d images in %lf seconds\n", val.X.rows, sec(clock()-time));
-
-        time=clock();
-        matrix pred = network_predict_data(net, val);
-
-        int i, j;
-        if (target_layer >= 0){
-            //layer l = net.layers[target_layer];
-        }
-
-        for(i = 0; i < pred.rows; ++i){
-            printf("%s", paths[curr-net.batch+i]);
-            for(j = 0; j < pred.cols; ++j){
-                printf("\t%g", pred.vals[i][j]);
-            }
-            printf("\n");
-        }
-
-        free_matrix(pred);
-
-        fprintf(stderr, "%lf seconds, %d images, %d total\n", sec(clock()-time), val.X.rows, curr);
-        free_data(val);
-    }
-}
-
-
-
-
-void run_classifier(int argc, char **argv)
-{
-    if(argc < 4){
-        fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
-        return;
-    }
-
-    int cam_index = find_int_arg(argc, argv, "-c", 0);
-    int top = find_int_arg(argc, argv, "-t", 0);
-    int clear = find_arg(argc, argv, "-clear");
-    char *data = argv[3];
-    char *cfg = argv[4];
-    char *weights = (argc > 5) ? argv[5] : 0;
-    char *filename = (argc > 6) ? argv[6]: 0;
-    char *layer_s = (argc > 7) ? argv[7]: 0;
-    int layer = layer_s ? atoi(layer_s) : -1;
-    if(0==strcmp(argv[2], "predict")) predict_classifier(data, cfg, weights, filename, top);
-    //else if(0==strcmp(argv[2], "train")) train_classifier(data, cfg, weights, NULL, 0, clear);
-}
 
 

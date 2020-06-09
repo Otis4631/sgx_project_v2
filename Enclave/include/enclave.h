@@ -36,5 +36,7 @@ void ce_forward(int batch, int classes, float *pred, float *truth, float *delta,
 using namespace std;
 void gen_random_bytes(size_t bytes_len, vector<uint8_t> &tmp);
 
-#include "dnnl_forward.h"
+#ifdef DNNL
+    #include "dnnl_forward.h"
+#endif
 #endif

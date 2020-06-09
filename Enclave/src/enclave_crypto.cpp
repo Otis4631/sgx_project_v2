@@ -5,6 +5,8 @@
 #include <memory>
 #include "enclave_crypto.h"
 #include "Enclave_t.h"
+#include <string>
+
 using namespace std;
 
 Crypto *crypto;
@@ -74,6 +76,7 @@ int Crypto::gen_sym_key() {
         printf("can not allow memory!\n");
         abort();
     }
+
     // encrypt sym key with public key
     run_sgx_function(sgx_rsa_pub_encrypt_sha256, (void*)public_key, 
     (unsigned char*)sym_key_encrypted , (size_t*)&sym_key_encrypted_len, 
@@ -100,13 +103,15 @@ Crypto::~Crypto() {
     if(public_key)          delete[] public_key;
 }
 
-int init_crypto(uint8_t* n, size_t n_len, uint8_t* e, size_t e_len, uint8_t* out, uint8_t* iv_o, size_t iv_len) {
+void init_crypto_ecall(uint8_t* n, size_t n_len, uint8_t* e, size_t e_len, uint8_t* out, uint8_t* iv_o, size_t iv_len) {
     uint8_t *pub_key;
-    int tmp = 0;
-    while(e_len > tmp) {
-       tmp += (sizeof(int));
-    }
-    e_len = tmp;
+    int remainder = e_len % sizeof(int);
+    // std::string e_s(e, e+e_len);
+    // for(int i = 0; i < sizeof(int) - remainder; i++) {
+    //     e_s.insert(e_s.begin(), '\0');
+    // }
+    // e = (uint8_t*)e_s.c_str();
+    e_len += (sizeof(int) - remainder);
     sgx_status_t ret = sgx_create_rsa_pub1_key(n_len, e_len , n, e, (void**)&pub_key);
     if (ret != SGX_SUCCESS) {
         print_error_message(ret);
@@ -115,15 +120,13 @@ int init_crypto(uint8_t* n, size_t n_len, uint8_t* e, size_t e_len, uint8_t* out
     crypto = new Crypto(pub_key, n_len, 16, 12, AES128GCM);
 
     if(!crypto)
-        return -1;
+        abort();
     memcpy(out, crypto->sym_key_encrypted, n_len);
     memcpy(iv_o, crypto->iv, iv_len);
     #ifdef DEBUG
         printf("Enclave sym key: ");
         print_string2hex(crypto->sym_key, crypto->sym_key_len);
-    #endif
-    return 0;
-   
+    #endif   
 }
 
 void test(uint8_t* p, size_t n) {

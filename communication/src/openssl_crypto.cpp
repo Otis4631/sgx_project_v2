@@ -32,12 +32,16 @@ int OpenSSLCrypto::set_mode(int _mode)
 {
     int cur_cipher = mode & CIPHER;
     int cur_param = mode & PARAM;
+    int cur_crypt = mode & MODE;
     mode = _mode;
     if((_mode & CIPHER) && cur_cipher != (_mode & CIPHER)) { // cipher change
         clean_up();
         mode = _mode;
+        init_status();
     }
-    
+    else if(cur_crypt != (_mode & MODE)) {
+        mode = cur_cipher | cur_param | _mode;
+    }
     if (mode & MODE_ENCRYPT)
     {
         enc = 1;
@@ -451,6 +455,7 @@ int OpenSSLCrypto::AES_init(uint8_t *_key, uint8_t *_iv)
             return ERR_RUN_FAILED;
         }
     }
+    return 1;
 }
 
 void rsa_test()

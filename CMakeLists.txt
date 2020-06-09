@@ -1,7 +1,7 @@
 ######################## common settings #############################################
 cmake_minimum_required(VERSION 3.1)             #确定版本号，必须步骤
 project(DNN_with_SGX)                           #项目名称，随便写
-set(SGX_SDK /data/lz/sgxsdk)                  #SDK的安装路径
+set(SGX_SDK /data/lz/sgxsdk_nd/sgxsdk)                  #SDK的安装路径
 set(SGX_MODE SIM)                                #参数的设置，注意，如果给变量赋值的时候，值本身有空格，那么值需要使用“”来保证赋值的正确性，否则赋值可能存在错误
 set(SGX_ARCH x64)
 set(SGX_COMMON_FLAGS -m64)
@@ -12,8 +12,8 @@ set(SGX_ENCLAVE_SIGNER ${SGX_SDK}/bin/x64/sgx_sign) #以上的参数都是根据
 set(CMAKE_CXX_STANDARD 11)
 
 set(OPENMP 1)
-set(SGX_DNNL 1)
-set(SHARED 0)
+set(SGX_DNNL 0)
+set(SHARED 1)
 set(SGX_DEBUG 1)
 
 # add_definitions(-D CRYPTO)
@@ -40,9 +40,6 @@ set(EDL_FILES_PATH ${PROJECT_SOURCE_DIR}/Enclave/edls)
 
 find_package(OpenSSL 1.1.0 REQUIRED)
 
-
-
-
 if(OPENMP EQUAL 1)
    if(APPLE)
       set(OpenMP_CXX_FLAGS  -Xpreprocessor -fopenmp -I/usr/local/opt/libomp/include)
@@ -55,10 +52,10 @@ if(OPENMP EQUAL 1)
    endif()
 
 endif()
+set(APP app)
 
-
-# add_subdirectory(App)                           #执行App文件夹中的CMakeLists.txt
-# add_subdirectory(Enclave)                       #执行Enclave文件夹中的CMakeLists.txt
+add_subdirectory(App)                           #执行App文件夹中的CMakeLists.txt
+add_subdirectory(Enclave)                       #执行Enclave文件夹中的CMakeLists.txt
 add_subdirectory(communication)
 # add_subdirectory(server)
 

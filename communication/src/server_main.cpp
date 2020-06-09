@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) {
 
-    init_log("server_logs");
+    init_log("server_logs/");
     LOG_NAME("Main");
     src::severity_logger<log_level> log;
     ptree config;

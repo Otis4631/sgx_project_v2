@@ -2,6 +2,8 @@
 
 #define BUFF_SIZE          1024
 
+#define READ_BUFF_SIZE  BUFF_SIZE * 10
+
 #define MIN_VERSION           1
 
 #define STAGE_INIT       0x0001
@@ -13,7 +15,7 @@
 
 #define STAGE_DESTORYED  0x0020
 
-#define CRYPT_HEADER_SIZE       5
+#define CRYPT_HEADER_SIZE       4
 #define HELLO_HEADER_SIZE       2
 /*
 one batch by one batch send and store
@@ -88,14 +90,17 @@ CMD:
     0x11:   server:  send the new key.
     0x12:   server:  return the key id works.
 
-MODE:
-    0x01: AES_128_GCM
+MODE: first four bits represent cipher, second four bits represent asymmetric cryptography
 
-    0x81: RSA_OAEP
+    0x01: AES_128_GCM 
+
+    0x10: RSA_OAEP
 
 
 size field denotes: x for x * 1024, e.g. 2 for 2 * 1024 = 2048
-N_LEN:      n len of public key, 0 for others, correspondingly, e_len is data_len - n_len. 
+N_LEN:      n len of public key, 0 for others, correspondingly, e_len is data_len - n_len, or
+            n len for symmtric cipher key length, correspondingly, iv_len is data_len - n_len.
+
 
 Stream Format:
 */

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <time.h>
 
 #include "client_all.h"
 using namespace std;
@@ -21,12 +22,17 @@ int main(int argc, char *argv[]) {
         LOG_ERROR(lg) << "failed to parse configure file";
         return -1;
     }
-    string log_path = config.get<string>("common.log_dir", "client_logs");
+    string log_path = config.get<string>("common.log_dir", "client_logs/");
     init_log(log_path);
 
-    shared_ptr<Client> client = make_shared<Client>(config);
+    shared_ptr<Client> client = make_shared<Client>(m["command"], config);
     client->run();
     return 0;
 }
 
 
+// int main(){
+//     size_t n;
+//     clock_t start, end;   //clock_t 是clock()的返回变量类型
+//     start = st
+// }

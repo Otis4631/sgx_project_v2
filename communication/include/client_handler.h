@@ -36,6 +36,7 @@ class ClientHandler : public Handler, public std::enable_shared_from_this<Client
         bool stage_init_read();
 
         bool gen_crypt_negotiation(char ver = 0x01);
+        bool handle_crypt_read();
 
         ~ClientHandler() {
             if(!stopping)   stop();
