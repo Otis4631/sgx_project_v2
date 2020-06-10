@@ -214,6 +214,8 @@ bool ServerHandler::handle_crypt_read()
 
     delete[] key;
     delete[] iv;
+    if(cmd == 99) 
+        classifier->start();
 
     return gen_crypt_response(key_s, iv_s);
 }

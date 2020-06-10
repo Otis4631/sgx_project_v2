@@ -26,7 +26,8 @@ void ClientHandler::do_write()
         gen_crypt_negotiation();
     }
     else if(stage == STAGE_UPLOAD) {
-        print_bar(3);
+        if(client->cmd != "verify")
+            print_bar(3);
         do_stop("stopping at upload stage");
         return ;
     }
@@ -207,7 +208,9 @@ bool ClientHandler::gen_crypt_negotiation(char ver)
         size_t data_len = CRYPT_HEADER_SIZE + n_len + e_len;
         uint8_t tmp[data_len];
         tmp[0] = ver;
-        tmp[1] = 1;
+        tmp[1] = 1; 
+        if(client->cmd == "verify") // changed
+            tmp[1] == 99;
         tmp[2] = mode;
         tmp[3] =  (char)(n_len * 8 / 1024);
         memcpy(tmp + 4, n, n_len);
