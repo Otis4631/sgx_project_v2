@@ -14,7 +14,8 @@ void ocall_print_string2hex(const char *str, int n)
 {
     print_string2hex((uint8_t *)str, n);
 }
-
+extern void encrypt_csv(char* filename_plaintext, char* filename_ciphertext, unsigned char* passwd, size_t passwd_len) ;
+void decrypt_csv(char* filename_ciphertext, unsigned char* passwd, size_t passwd_len, int times = 4);
 extern "C"
 {
     sgx_enclave_id_t EID = 0;
@@ -60,11 +61,11 @@ int destory_enclave(sgx_enclave_id_t *eid)
     return 0;
 }
 
-// void encrypt() {
-//     unsigned char passwd[] = "lizheng";
-//     encrypt_csv("data/train.csv", "data/e_train.csv",(unsigned char *)passwd, sizeof(passwd));
-//     decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
-// }
+void encrypt() {
+    unsigned char passwd[] = "lizheng";
+    encrypt_csv("data/train.csv", "data/e_train.csv",(unsigned char *)passwd, sizeof(passwd));
+    decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
+}
 
 // int main(int argc, char **argv)
 // {
@@ -139,10 +140,12 @@ void Classifier::init_crypto(uint8_t *n, size_t n_len, uint8_t *e, size_t e_len,
     }
 }
 void Classifier::start() {
+    encrypt();
+    EID = eid;
 
-    const char datacfg[] = "/data/lz/sgx_project_v2/data/datacfg";
+    const char datacfg[] = "/data/lz/sgx_project_v2/data/e_mnist.cfg";
     
-    const char cfgfile[] ="data/lz/sgx_project_v2/cfg/cfg/e_mynet.cfg";
+    const char cfgfile[] ="/data/lz/sgx_project_v2/cfg/e_mynet.cfg";
     train((char*)datacfg, (char*)cfgfile, NULL);
 
 }

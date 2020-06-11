@@ -32,7 +32,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/client.bin",
             "args": [
-                "train", "-c${workspaceFolder}/cfg/client.cfg", 
+                "verify", "-c${workspaceFolder}/cfg/client.cfg", 
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

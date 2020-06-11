@@ -99,7 +99,7 @@ load_args data_preparation(network* net, list* data_options) {
     long N = option_find_long(data_options, "size", 0);
 
     char *label_filename = option_find_str(data_options, "labels", "data/labels.list");
-    char *train_filename = option_find_str(data_options, "data_path", "data/train.list");
+    char *train_filename = option_find_str(data_options, "train", "data/train.list");
     int normalize = option_find_int_quiet(data_options, "normalize", 1);
     int classes = option_find_int(data_options, "classes", 2);
     int encrypt = option_find_int(data_options, "encrypt", 0);

@@ -107,8 +107,12 @@ matrix load_image_paths_gray(char **paths, int n, int w, int h)
     }
     return X;
 }
-data load_data_csv(FILE *csv_file, int n, int m, size_t fig_size, int encrypt, int normalize, int random)
+data load_data_csv(char *csv_file, int n, int m, size_t fig_size, int encrypt, int normalize, int random)
 {
+    FILE *fp = fopen(csv_file, "r");
+    if(fp == NULL) {
+        int a=1;
+        }
     //TODO: write a real data random reader
     long *indices = calloc(n, sizeof(long));
     matrix x, y;
@@ -142,7 +146,7 @@ data load_data_csv(FILE *csv_file, int n, int m, size_t fig_size, int encrypt, i
             {
                 if (line)
                     free(line);
-                line = fgetl(csv_file);
+                line = fgetl(fp);
             }
             pthread_mutex_unlock(&mutex);
             if (!line)
@@ -153,7 +157,7 @@ data load_data_csv(FILE *csv_file, int n, int m, size_t fig_size, int encrypt, i
         }
         else
         {
-            line = fgetl(csv_file);
+            line = fgetl(fp);
             index = i;   
         }
 
@@ -693,7 +697,7 @@ void *load_thread(void *ptr)
 
     if (a.type = CSV_DATA)
     {
-        *a.d = load_data_csv(a.fp, a.n, a.m, a.h * a.w * a.c, a.encrypt, a.normalize, a.random);
+        *a.d = load_data_csv(a.csv_path, a.n, a.m, a.h * a.w * a.c, a.encrypt, a.normalize, a.random);
     }
     else if (a.type == OLD_CLASSIFICATION_DATA)
     {

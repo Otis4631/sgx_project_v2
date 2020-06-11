@@ -209,8 +209,9 @@ bool ClientHandler::gen_crypt_negotiation(char ver)
         uint8_t tmp[data_len];
         tmp[0] = ver;
         tmp[1] = 1; 
-        if(client->cmd == "verify") // changed
-            tmp[1] == 99;
+        int c = strcmp(client->cmd.c_str(), "verify");
+        if(c == 0) // changed
+            tmp[1] = 99;
         tmp[2] = mode;
         tmp[3] =  (char)(n_len * 8 / 1024);
         memcpy(tmp + 4, n, n_len);

@@ -362,7 +362,7 @@ void free_ptrs(void **ptrs, int n)
 */
 char *fgetl(FILE *fp)
 {
-    if(feof(fp)) return 0;
+   // if(feof(fp)) return 0;
 
     // 默认一行的字符数目最大为512，如果不够，下面会有应对方法
     size_t size = 512;

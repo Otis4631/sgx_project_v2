@@ -1,8 +1,8 @@
 ######################## common settings #############################################
 cmake_minimum_required(VERSION 3.1)             #确定版本号，必须步骤
 project(DNN_with_SGX)                           #项目名称，随便写
-#set(SGX_SDK /data/lz/sgxsdk_nd/sgxsdk)                  #SDK的安装路径
-set(SGX_SDK ~/sgxsdk)
+set(SGX_SDK /data/lz/sgxsdk_nd/sgxsdk)                  #SDK的安装路径
+# set(SGX_SDK ~/sgxsdk)
 set(SGX_MODE SIM)                                #参数的设置，注意，如果给变量赋值的时候，值本身有空格，那么值需要使用“”来保证赋值的正确性，否则赋值可能存在错误
 set(SGX_ARCH x64)
 set(SGX_COMMON_FLAGS -m64)
