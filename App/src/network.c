@@ -9,7 +9,6 @@
 #include "e_forward.h"
 
 #include "connected_layer.h"
-#include "local_layer.h"
 #include "convolutional_layer.h"
 #include "activation_layer.h"
 #include "normalization_layer.h"
@@ -114,40 +113,40 @@ char *get_layer_string(LAYER_TYPE a)
             return "convolutional";
         case ACTIVE:
             return "activation";
-        case LOCAL:
-            return "local";
-        case DECONVOLUTIONAL:
-            return "deconvolutional";
+        // case LOCAL:
+        //     return "local";
+        // case DECONVOLUTIONAL:
+        //     return "deconvolutional";
         case CONNECTED:
             return "connected";
-        case RNN:
-            return "rnn";
-        case GRU:
-            return "gru";
-        case CRNN:
-            return "crnn";
+        // case RNN:
+        //     return "rnn";
+        // case GRU:
+        //     return "gru";
+        // case CRNN:
+        //     return "crnn";
         case MAXPOOL:
             return "maxpool";
-        case REORG:
-            return "reorg";
+        // case REORG:
+        //     return "reorg";
         case AVGPOOL:
             return "avgpool";
         case SOFTMAX:
             return "softmax";
-        case DETECTION:
-            return "detection";
-        case REGION:
-            return "region";
+        // case DETECTION:
+        //     return "detection";
+        // case REGION:
+        //     return "region";
         case DROPOUT:
             return "dropout";
-        case CROP:
-            return "crop";
+        // case CROP:
+        //     return "crop";
         case COST:
             return "cost";
-        case ROUTE:
-            return "route";
-        case SHORTCUT:
-            return "shortcut";
+        // case ROUTE:
+        //     return "route";
+        // case SHORTCUT:
+        //     return "shortcut";
         case NORMALIZATION:
             return "normalization";
         case BATCHNORM:
@@ -182,25 +181,13 @@ void forward_network(network* netp)
 {
     network net = *netp;
     int i;
-    /// 遍历所有层，从第一层到最后一层，逐层进行前向传播（网络总共有net.n层）
     for(i = 0; i < net.n; ++i){
-        /// 置网络当前活跃层为当前层，即第i层
         net.index = i;
-        /// 获取当前层
         layer l = net.layers[i];
-        //printf("layer: %d of %d\n", i, net.n);
-        /// 如果当前层的l.delta已经动态分配了内存，则调用fill_cpu()函数，将其所有元素的值初始化为0
         if(l.delta){
-            /// 第一个参数为l.delta的元素个数，第二个参数为初始化值，为0
             fill_cpu(l.outputs * l.batch, 0, l.delta, 1);
         }
-
-        /// 前向传播（前向推理）：完成l层的前向推理
         l.forward(l, net);
-
-        /// 完成某一层的推理时，置网络的输入为当前层的输出（这将成为下一层网络的输入），要注意的是，此处是直接更改指针变量net.input本身的值，
-        /// 也就是此处是通过改变指针net.input所指的地址来改变其中所存内容的值，并不是直接改变其所指的内容而指针所指的地址没变，
-        /// 所以在退出forward_network()函数后，其对net.input的改变都将失效，net.input将回到进入forward_network()之前时的值。
         net.input = l.output;
         if(l.truth) {
             net.truth = l.output;

@@ -40,27 +40,20 @@ list *read_cfg(char *filename);
 LAYER_TYPE string_to_layer_type(char * type)
 {
 
-    if (strcmp(type, "[shortcut]")==0) return SHORTCUT;
-    if (strcmp(type, "[crop]")==0) return CROP;
+
     if (strcmp(type, "[cost]")==0) return COST;
-    if (strcmp(type, "[detection]")==0) return DETECTION;
-    if (strcmp(type, "[region]")==0) return REGION;
-    if (strcmp(type, "[local]")==0) return LOCAL;
+
     if (strcmp(type, "[conv]")==0
             || strcmp(type, "[convolutional]")==0) return CONVOLUTIONAL;
-    if (strcmp(type, "[deconv]")==0
-            || strcmp(type, "[deconvolutional]")==0) return DECONVOLUTIONAL;
     if (strcmp(type, "[activation]")==0) return ACTIVE;
     if (strcmp(type, "[net]")==0
             || strcmp(type, "[network]")==0) return NETWORK;
-    if (strcmp(type, "[crnn]")==0) return CRNN;
-    if (strcmp(type, "[gru]")==0) return GRU;
-    if (strcmp(type, "[rnn]")==0) return RNN;
+
     if (strcmp(type, "[conn]")==0
             || strcmp(type, "[connected]")==0) return CONNECTED;
     if (strcmp(type, "[max]")==0
             || strcmp(type, "[maxpool]")==0) return MAXPOOL;
-    if (strcmp(type, "[reorg]")==0) return REORG;
+
     if (strcmp(type, "[avg]")==0
             || strcmp(type, "[avgpool]")==0) return AVGPOOL;
     if (strcmp(type, "[dropout]")==0) return DROPOUT;
@@ -69,7 +62,7 @@ LAYER_TYPE string_to_layer_type(char * type)
     if (strcmp(type, "[batchnorm]")==0) return BATCHNORM;
     if (strcmp(type, "[soft]")==0
             || strcmp(type, "[softmax]")==0) return SOFTMAX;
-    if (strcmp(type, "[route]")==0) return ROUTE;
+
 
     // 如果没有一个匹配上，说明配置文件中存在不能识别的网络层名称，
     // 返回BLANK（这时应该去检查下配置文件，看看是否有拼写错误）
@@ -496,9 +489,8 @@ network parse_network_cfg(char *filename)
         if(lt == CONVOLUTIONAL){
             l = parse_convolutional(options, params);
        
-        }else if(lt == LOCAL){
-            l = parse_local(options, params);
-        }else if(lt == ACTIVE){
+        }
+        else if(lt == ACTIVE){
             l = parse_activation(options, params);
         }else if(lt == CONNECTED){
             l = parse_connected(options, params);
@@ -747,38 +739,36 @@ void save_weights_upto(network net, char *filename, int cutoff)
     int i;
     for(i = 0; i < net.n && i < cutoff; ++i){
         layer l = net.layers[i];
-        if(l.type == CONVOLUTIONAL || l.type == DECONVOLUTIONAL){
+        if(l.type == CONVOLUTIONAL ){
             save_convolutional_weights(l, fp);
         } if(l.type == CONNECTED){
             save_connected_weights(l, fp);
         } if(l.type == BATCHNORM){
             save_batchnorm_weights(l, fp);
-        } if(l.type == RNN){
-            save_connected_weights(*(l.input_layer), fp);
-            save_connected_weights(*(l.self_layer), fp);
-            save_connected_weights(*(l.output_layer), fp);
-        } if(l.type == GRU){
-            save_connected_weights(*(l.input_z_layer), fp);
-            save_connected_weights(*(l.input_r_layer), fp);
-            save_connected_weights(*(l.input_h_layer), fp);
-            save_connected_weights(*(l.state_z_layer), fp);
-            save_connected_weights(*(l.state_r_layer), fp);
-            save_connected_weights(*(l.state_h_layer), fp);
-        } if(l.type == CRNN){
-            save_convolutional_weights(*(l.input_layer), fp);
-            save_convolutional_weights(*(l.self_layer), fp);
-            save_convolutional_weights(*(l.output_layer), fp);
-        } if(l.type == LOCAL){
-#ifdef GPU
-            if(gpu_index >= 0){
-                pull_local_layer(l);
-            }
-#endif
-            int locations = l.out_w*l.out_h;
-            int size = l.size*l.size*l.c*l.n*locations;
-            fwrite(l.biases, sizeof(float), l.outputs, fp);
-            fwrite(l.weights, sizeof(float), size, fp);
         }
+        // } if(l.type == RNN){
+        //     save_connected_weights(*(l.input_layer), fp);
+        //     save_connected_weights(*(l.self_layer), fp);
+        //     save_connected_weights(*(l.output_layer), fp);
+        
+        // } if(l.type == GRU){
+        //     save_connected_weights(*(l.input_z_layer), fp);
+        //     save_connected_weights(*(l.input_r_layer), fp);
+        //     save_connected_weights(*(l.input_h_layer), fp);
+        //     save_connected_weights(*(l.state_z_layer), fp);
+        //     save_connected_weights(*(l.state_r_layer), fp);
+        //     save_connected_weights(*(l.state_h_layer), fp);
+        // } if(l.type == CRNN){
+        //     save_convolutional_weights(*(l.input_layer), fp);
+        //     save_convolutional_weights(*(l.self_layer), fp);
+        //     save_convolutional_weights(*(l.output_layer), fp);
+        // } if(l.type == LOCAL){
+
+        //     int locations = l.out_w*l.out_h;
+        //     int size = l.size*l.size*l.c*l.n*locations;
+        //     fwrite(l.biases, sizeof(float), l.outputs, fp);
+        //     fwrite(l.weights, sizeof(float), size, fp);
+        // }
     }
     fclose(fp);
 }
@@ -936,7 +926,7 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
     for(i = start; i < net->n && i < cutoff; ++i){
         layer l = net->layers[i];
         if (l.dontload) continue;
-        if(l.type == CONVOLUTIONAL || l.type == DECONVOLUTIONAL){
+        if(l.type == CONVOLUTIONAL ){
             load_convolutional_weights(l, fp);
         }
         if(l.type == CONNECTED){
@@ -945,35 +935,31 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
         if(l.type == BATCHNORM){
             load_batchnorm_weights(l, fp);
         }
-        if(l.type == CRNN){
-            load_convolutional_weights(*(l.input_layer), fp);
-            load_convolutional_weights(*(l.self_layer), fp);
-            load_convolutional_weights(*(l.output_layer), fp);
-        }
-        if(l.type == RNN){
-            load_connected_weights(*(l.input_layer), fp, transpose);
-            load_connected_weights(*(l.self_layer), fp, transpose);
-            load_connected_weights(*(l.output_layer), fp, transpose);
-        }
-        if(l.type == GRU){
-            load_connected_weights(*(l.input_z_layer), fp, transpose);
-            load_connected_weights(*(l.input_r_layer), fp, transpose);
-            load_connected_weights(*(l.input_h_layer), fp, transpose);
-            load_connected_weights(*(l.state_z_layer), fp, transpose);
-            load_connected_weights(*(l.state_r_layer), fp, transpose);
-            load_connected_weights(*(l.state_h_layer), fp, transpose);
-        }
-        if(l.type == LOCAL){
-            int locations = l.out_w*l.out_h;
-            int size = l.size*l.size*l.c*l.n*locations;
-            fread(l.biases, sizeof(float), l.outputs, fp);
-            fread(l.weights, sizeof(float), size, fp);
-#ifdef GPU
-            if(gpu_index >= 0){
-                push_local_layer(l);
-            }
-#endif
-        }
+        // if(l.type == CRNN){
+        //     load_convolutional_weights(*(l.input_layer), fp);
+        //     load_convolutional_weights(*(l.self_layer), fp);
+        //     load_convolutional_weights(*(l.output_layer), fp);
+        // }
+        // if(l.type == RNN){
+        //     load_connected_weights(*(l.input_layer), fp, transpose);
+        //     load_connected_weights(*(l.self_layer), fp, transpose);
+        //     load_connected_weights(*(l.output_layer), fp, transpose);
+        // }
+        // if(l.type == GRU){
+        //     load_connected_weights(*(l.input_z_layer), fp, transpose);
+        //     load_connected_weights(*(l.input_r_layer), fp, transpose);
+        //     load_connected_weights(*(l.input_h_layer), fp, transpose);
+        //     load_connected_weights(*(l.state_z_layer), fp, transpose);
+        //     load_connected_weights(*(l.state_r_layer), fp, transpose);
+        //     load_connected_weights(*(l.state_h_layer), fp, transpose);
+        // }
+        // if(l.type == LOCAL){
+        //     int locations = l.out_w*l.out_h;
+        //     int size = l.size*l.size*l.c*l.n*locations;
+        //     fread(l.biases, sizeof(float), l.outputs, fp);
+        //     fread(l.weights, sizeof(float), size, fp);
+
+        //}
     }
     fprintf(stderr, "Done!\n");
     fclose(fp);

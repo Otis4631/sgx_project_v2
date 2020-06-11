@@ -13,7 +13,6 @@
 #include "utils.h"
 #include "cost_layer.h"
 #include "gemm.h"
-#include "local_layer.h"
 #include "softmax_layer.h"
 #include "network.h"
 #include "avgpool_layer.h"

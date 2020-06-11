@@ -6,9 +6,10 @@ CARGS =  train -c cfg/client.cfg # /data/lz/sgx_project_v2/data/train.cfg /data/
 S_EXE_NAME = server.bin
 SARGS = -c cfg/server.cfg 
 all: build
-	cd $(BUILD_DIR) &&  make -j20
+	cd $(BUILD_DIR) &&  make -j4
 runc:
 	$(DEST_DIR)/$(C_EXE_NAME) $(CARGS)
+
 
 runs:
 	$(DEST_DIR)/$(S_EXE_NAME) $(SARGS)
