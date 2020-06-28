@@ -1,6 +1,6 @@
+# App CmakeLists
 
-
-if(${SGX_MODE} EQUAL "HW")
+if(${SGX_MODE} EQUAL 1)
     set(Urts_Library_Name sgx_urts)
     set(UAE_Server_Name sgx_uae_service)
 ELSE()
@@ -8,7 +8,7 @@ ELSE()
     set(UAE_Server_Name sgx_uae_service_sim)
 endif()
 
-set(LIBRARY ${Urts_Library_Name} pthread ${UAE_Server_Name})
+set(LIBRARY ${Urts_Library_Name} pthread )
 if(${OPENMP_FOUND})
     set(LIBRARY ${LIBRARY} ${OPENMP_LIBRARIES})
 endif()
@@ -44,12 +44,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${App_C_Flags}")            #将将CMake中�
 # set(CMAKE_EXE_LINKER_FLAGS "-L/usr/local/lib -lcrypto  -lpthread  -L${SGX_LIBRARY_PATH} -l${Urts_Library_Name}")   
 set(CMAKE_CXX_STANDARD 11)   #设置C++的std，相当于makefile文件中的-std=c++11
 
-# target_include_directories(${SGX_LIBRARY_PATH})
- LINK_DIRECTORIES(${SGX_LIBRARY_PATH})    #注意，不可信部分链接的库不再${SDK}/lib64中，而是在/usr/lib中，通过本条指令，这样在链接的时候，我们使用的库Cmake就会在/usr/lib中寻找
+#  target_include_directories(${SGX_LIBRARY_PATH})
+if(${SGX_MODE} EQUAL 0) # for sim mode
+    LINK_DIRECTORIES(${SGX_LIBRARY_PATH})  
+else()
+    LINK_DIRECTORIES("/usr/lib/x86_64-linux-gnu")
+endif()
 
-# set(current_dir ${CMAKE_CURRENT_SOURCE_DIR})
-
-# set(CMAKE_INSTALL_PREFIX )
 
 if(${SHARED} EQUAL 1)
     add_library(${APP} SHARED ${App_Cpp_Files} ${App_C_Files} ${UNTRUSTED_BRIDGE})
@@ -57,4 +58,4 @@ else()
     add_executable(${APP} ${App_Cpp_Files} ${App_C_Files} ${UNTRUSTED_BRIDGE})
 endif()
 
-TARGET_LINK_LIBRARIES(${APP} PRIVATE ${LIBRARY}) 
+TARGET_LINK_LIBRARIES(${APP}    ${LIBRARY}) 

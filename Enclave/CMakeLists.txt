@@ -1,7 +1,7 @@
 set(Trts_Library_Name sgx_trts)
 set(Service_Library_Name sgx_tservice)
 
-IF(${SGX_MODE} EQUAL "HW")
+IF(${SGX_MODE} EQUAL 1)
     set(Trts_Library_Name sgx_trts)
     set(Service_Library_Name sgx_tservice)
 ELSE()

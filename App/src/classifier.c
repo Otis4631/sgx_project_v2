@@ -180,9 +180,9 @@ void train(char *datacfg, char *cfgfile, char *weightfile) {
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.batch, net.decay);
 
     list *data_options = read_data_cfg(datacfg);
-    int is_csv_format = option_find_int(data_options, "csv", 0);
+    char* is_csv_format = option_find_str(data_options, "type", "csv");  
 
-    if(is_csv_format) {
+    if(strcmp("csv",  is_csv_format) == 0) {
         train_csv(&net, data_options);
     }
 

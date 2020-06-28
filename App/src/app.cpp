@@ -34,7 +34,7 @@ int initialize_enclave(sgx_enclave_id_t *eid)
     const void *enclave_ex_p[32] = {0};
 
     // enclave_ex_p[SGX_CREATE_ENCLAVE_EX_SWITCHLESS_BIT_IDX] = (const void*)us_config;
-    ret = sgx_create_enclave("/data/lz/sgx_project_v2/build/enclave.signed.so", SGX_DEBUG_FLAG, NULL, NULL, eid, NULL);
+    ret = sgx_create_enclave("/home/dell/sgx_project_v2/build/enclave.signed.so", SGX_DEBUG_FLAG, NULL, NULL, eid, NULL);
     // ret = sgx_create_enclave_ex(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, NULL, NULL, &EID, NULL, SGX_CREATE_ENCLAVE_EX_SWITCHLESS, enclave_ex_p);
     if (ret != SGX_SUCCESS)
     {
@@ -67,39 +67,39 @@ void encrypt() {
     decrypt_csv("data/e_train.csv",(unsigned char *)passwd,sizeof(passwd));
 }
 
-// int main(int argc, char **argv)
-// {
-//     if (argc < 3)
-//     {
-//         printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] \n", argv[0]);
-//         return -1;
-//     }
+int main(int argc, char **argv)
+{
+    if (argc < 3)
+    {
+        printf("Usage ./%s [train/predict] [data cfg] [network cfg] [weights cfg(optional)] \n", argv[0]);
+        return -1;
+    }
 
-// #ifdef OPENMP
-//     printf("OPENMP!\n");
-// #endif
-//     time_t t = clock();
-//     if (initialize_enclave() == 0)
-//         printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
-//     else
-//     {
-//         printf("Initialize enclave failed\n");
-//         return -1;
-//     }
+#ifdef OPENMP
+    printf("OPENMP!\n");
+#endif
+    time_t t = clock();
+    if (initialize_enclave(&EID) == 0)
+        printf("initialize enclave successfully using %.3fs\n", (double)(clock() - t) / CLOCKS_PER_SEC);
+    else
+    {
+        printf("Initialize enclave failed\n");
+        return -1;
+    }
 
-//     char *weights_path = NULL;
-//     if (argc > 4)
-//         weights_path = argv[4];
-//     if (0 == strcmp(argv[1], "train"))
-//         train(argv[2], argv[3], weights_path);
-//     else if (0 == strcmp(argv[1], "predict"))
-//         predict(argv[2], argv[3], weights_path);
-//     else
-//     {
-//         printf("Unknown args\n");
-//     }
-//     destory_enclave();
-// }
+    char *weights_path = NULL;
+    if (argc > 4)
+        weights_path = argv[4];
+    if (0 == strcmp(argv[1], "train"))
+        train(argv[2], argv[3], weights_path);
+    else if (0 == strcmp(argv[1], "predict"))
+        predict(argv[2], argv[3], weights_path);
+    else
+    {
+        printf("Unknown args\n");
+    }
+    destory_enclave(&EID);
+}
 
 int endian_swap(uint8_t *in, size_t size)
 {

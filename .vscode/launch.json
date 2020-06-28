@@ -64,13 +64,13 @@
         },
         {
             "name": "sgx-gdb",
-            "miDebuggerPath": "/data/lz/sgxsdk/bin/sgx-gdb",
+            "miDebuggerPath": "/data/sgxsdk/bin/sgx-gdb",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/app",
             "args": [
                 "train",
-                "data/train.cfg",
+                "data/mnist.cfg",
                 "cfg/e_mynet.cfg"
             ],
             "stopAtEntry": false,

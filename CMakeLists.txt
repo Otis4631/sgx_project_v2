@@ -1,9 +1,9 @@
 ######################## common settings #############################################
 cmake_minimum_required(VERSION 3.1)             #确定版本号，必须步骤
 project(DNN_with_SGX)                           #项目名称，随便写
-set(SGX_SDK /data/lz/sgxsdk_nd/sgxsdk)                  #SDK的安装路径
-# set(SGX_SDK ~/sgxsdk)
-set(SGX_MODE SIM)                                #参数的设置，注意，如果给变量赋值的时候，值本身有空格，那么值需要使用“”来保证赋值的正确性，否则赋值可能存在错误
+set(SGX_SDK /data/sgxsdk)                  #SDK的安装路径
+
+set(SGX_MODE 1)                                # 1  for HW, 0 for SIM
 set(SGX_ARCH x64)
 set(SGX_COMMON_FLAGS -m64)
 set(SGX_LIBRARY_PATH ${SGX_SDK}/lib64)
@@ -14,12 +14,12 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(OPENMP 1)
 set(SGX_DNNL 0)
-set(SHARED 1)
+set(SHARED 0)
 set(SGX_DEBUG 1)
 
 # add_definitions(-D CRYPTO)
 #####################################################################################
-if(SGX_DEBUG EQUAL 1)
+if(${SGX_DEBUG} EQUAL 1)
    set(CMAKE_VERBOSE_MAKEFILE ON)
    message("Building in debug mode")
    set(SGX_COMMON_FLAGS "${SGX_COMMON_FLAGS} -O0 -g")
@@ -27,6 +27,13 @@ if(SGX_DEBUG EQUAL 1)
 else()
    set(SGX_COMMON_FLAGS "${SGX_COMMON_FLAGS} -Ofast")
 endif(SGX_DEBUG EQUAL 1)
+
+if(${SGX_MODE} EQUAL 1)
+   message("Building in hardware mode")
+else()
+   message("Building in sim mode")
+endif()
+
 
 set(UNWARN "-Wno-unused-result")
 set(SGX_COMMON_FLAGS "${SGX_COMMON_FLAGS} ${UNWARN}")
@@ -57,7 +64,10 @@ set(APP app)
 
 add_subdirectory(App)                           #执行App文件夹中的CMakeLists.txt
 add_subdirectory(Enclave)                       #执行Enclave文件夹中的CMakeLists.txt
-add_subdirectory(communication)
+
+if(${SHARED} EQUAL 1)
+   add_subdirectory(communication)
+endif()
 # add_subdirectory(server)
 
 

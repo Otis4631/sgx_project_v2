@@ -12,6 +12,8 @@ find_package(Boost REQUIRED COMPONENTS
 add_definitions(-DBOOST_LOG_DYN_LINK)
 
 set(LIBRARY ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES})
+LINK_DIRECTORIES(${SGX_LIBRARY_PATH})
+
 
 include_directories("include" "../App/include" ${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIRS} )
 
